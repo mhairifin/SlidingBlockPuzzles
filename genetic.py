@@ -1,17 +1,43 @@
 import random
 import heapq
+import statistics as stats
 
 def main():
     initsbp = [[1, 2, 3, 4],[6, 9, 0, 8],[5, 10, 7, 11], [12, 13, 14, 15]]
     finsbp = [[1,2,3,4],[5,6,7,8],[9,0,10,11], [12, 13, 14, 15]]
     init = [[1,2,3,4], [5,6,7,8], [9, 10, 0, 11], [12,13,14,15]]
-    rounds=15
-    length=10
+    rounds = 20
+    length = 1
     popsize = 100
     puzzle = SBP(initsbp, finsbp, rounds, length, popsize)
-    print(str(puzzle.sol.seq) + " with score " + str(puzzle.sol.score))
+    print(str(puzzle.sol.seq) + " with score " + str(puzzle.sol.score) + " and solution length " + str(puzzle.sol.solpos+1))
     printboard(initsbp)
-    printboard(puzzle.sol.ib)
+    printboard(finsbp)
+    explore(puzzle)
+
+def explore(puzzle):
+    yn = input("Would you like to explore this result?")
+    if yn=='y':
+        us = input("Enter sel for select, pop for population, res to see succesfull sequence, quit to quit")
+        while us != "quit":
+            if us == "sel":
+                seeseqs(puzzle.sel)
+            elif us == "pop":
+                seeseqs(puzzle.pop)
+            elif us == "res":
+                print(getrep(puzzle.sol))
+            us = input("Enter sel for select, pop for population, res to see succesful sequence, quit to quit")
+
+def getrep(sol):
+    seq = sol.seq
+    solin = sol.solpos
+    for i in range(solin+1):
+        print(seq[i][0], end=", ")
+    print()
+
+def seeseqs(select):
+    for item in select:
+        print("Score: " + str(item.score) + "\tLength: " + str(item.solpos+1))
 
 def getavg(select):
     tot = 0
@@ -27,21 +53,25 @@ class SBP():
         self.problem = problem
         self.gb = SBP.getgoal(goal)
         self.pop = self.getpop(problem, length, popsize)
-        select = self.select()
+        self.sel = self.select()
         print("END INITIAL POPULATION")
-        for i in range(rounds):
-            self.pop = self.crossover(select)
-            select = self.select()
+        avg = []
+        i=0
+        while self.keepgoing():
+            self.pop = self.crossover(self.sel)
+            self.sel = self.select()
+            avg = getavg(self.sel)
             print("END GENERATION " + str(i))
             print("WITH POP AVERAGE: " + str(getavg(self.pop)))
-            print("WITH ELITE AVERAGE: " + str(getavg(select)))
-        lowest = float("inf")
-        self.sol = Sequence("bad", "bad", "bad")
+            print("WITH ELITE AVERAGE: " + str(avg))
+            i+=1
+        self.sol = Sequence("bad", float("inf"), "bad", "bad")
         c = 0
-        for el in self.pop:
-            if el.score < lowest:
+        for el in self.sel:
+            if el.score < self.sol.score:
                 self.sol = el
-                lowest = el.score
+            elif el.score == self.sol.score and el.solpos<self.sol.solpos:
+                self.sol = el
             c += 1
     
     def getgoal(goal):
@@ -49,9 +79,23 @@ class SBP():
         for i in range(len(goal)):
             for j in range(len(goal[i])):
                 pos[goal[i][j]] = [i,j]
-
         return pos
+
+    def keepgoing(self):
+        scores = [seq.score for seq in self.pop]
+        elitescores = [seq.score for seq in self.sel]
+        var = stats.pvariance(scores)
+        avg = stats.mean(elitescores)
+        if var<1 and avg == 0:
+            return False
+        elif var<1:
+            self.extend()
+            return True
+        return True
                 
+    def extend(self):
+        for i in range(len(self.pop)):
+            self.pop[i].extend(self.getsequence(7, self.pop[i].ib))
         
     def getpop(self, ib, l, popsize):
         pop = []
@@ -86,6 +130,7 @@ class SBP():
         ibalter = [x[:] for x in self.problem]
         r,c = self.zero
         score = float("inf")
+        solpos = -1
         
         for i in range(len(mum.seq)):
             ibmum = [x[:] for x in ibalter]
@@ -148,8 +193,10 @@ class SBP():
                 r,c = dr,dc
                 if totd<score:
                     score=totd
+            if score == 0 and solpos == -1:
+                solpos = i
                 
-        return Sequence(child, score, ibalter)
+        return Sequence(child, score, ibalter, solpos)
     
     def findzero(ib):
         for i in range(len(ib)):
@@ -171,11 +218,12 @@ class SBP():
         return possmoves[num-1]
         
     def getsequence(self, length, ib):
-        r, c = self.zero
+        r, c = SBP.findzero(ib)
         ibalter = [x[:] for x in ib]
         seq = []
         score = float("inf") #arbitrarily high number
         ongoingscore = self.manhattan(ib)
+        solpos = -1;
         for i in range(length):
             move = SBP.getvalidmove(r,c,len(ibalter))
             r,c, adjscore, ibalter = self.applymove(move, r, c, ibalter)
@@ -183,7 +231,9 @@ class SBP():
             if ongoingscore<score:
                 score = ongoingscore
             seq.append(move)
-        return Sequence(seq, score, ibalter)
+            if ongoingscore == -1 and solpos == -1:
+                solpos = i
+        return Sequence(seq, score, ibalter, solpos)
                 
     def manhattan(self, ib):
         score = 0
@@ -213,10 +263,18 @@ class SBP():
         return (x,y, adjscore, ib)
         
 class Sequence():
-    def __init__(self, seq, score, ib):
+    def __init__(self, seq, score, ib, sol):
         self.seq = seq
         self.score = score
         self.ib = ib
+        self.solpos = sol
+
+    def extend(self, second):
+        self.seq+=second.seq
+        self.score=second.score
+        self.ib = second.ib
+        if second.solpos != -1:
+            self.solpos = second.solpos+len(self.seq)
     
 def printboard(ib):
     for i in range(len(ib)):
@@ -228,5 +286,3 @@ def printboard(ib):
     
 if __name__ == "__main__":
     main()
-        
-        
