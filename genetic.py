@@ -1,5 +1,6 @@
 import random
 import heapq
+import copy
 import statistics as stats
 from enum import Enum
 
@@ -49,10 +50,10 @@ def getavg(select):
 class Board():
     def __init__(self, problem, pieces):
         self.matrix = problem
-        self.pieces = pieces
+        self.pieces = copy.deepcopy(pieces)
 
     def copy(self):
-        return Board(self.board, self.pieces)
+        return Board(copy.deepcopy(self.matrix), self.pieces)
         
     def getpiece(self, loc = (-1,-1), id = None):
         if id == None:
@@ -61,7 +62,9 @@ class Board():
         return self.pieces[id]
         
 class SBP():
+
     EMPTY = 0
+    
     def __init__(self, problem, goal, rounds, length, popsize):
         self.zero = SBP.findzeros(problem)
         self.board = Board(problem, pieces)
@@ -238,7 +241,7 @@ class SBP():
         adjzeros = [z for z in zeros if self.adj(z,board)]
         possmoves = [self.getMoves(z) for z in adjzeros]
         num = random.randint(1,len(possmoves))
-        return possmoves[num-1]
+        return possmoves[num-1], 
         
     def getMoves(z, board):
         dirs = {'u': Compass.UP, 'd': Compass.DOWN, 'r': Compass.RIGHT, 'l': Compass.LEFT}
@@ -279,17 +282,17 @@ class SBP():
         
 
     # calculate manhattan before running get sequence
-    def getsequence(self, length, ib, ongoingscore = None, zeros = None):
+    def getsequence(self, length, board, ongoingscore = None, zeros = None):
         if zeros = None:
-            zeros = SBP.findzeros(ib) # calculate before getsequence
-        ibalter = [x[:] for x in ib]
+            zeros = SBP.findzeros(board.matrix) 
+        ibalter = board.copy()
         seq = []
         score = float("inf") #arbitrarily high number
         if ongoingscore = None:
-            ongoingscore = self.manhattan(ib) #calculate before getsequence
-        solpos = -1;
+            ongoingscore = self.manhattan(board.matrix) 
+        solpos = -1; 
         for i in range(length):
-            move, zeros = SBP.getvalidmove(zeros,len(ibalter))
+            move, zeros = SBP.getvalidmove(zeros,ibalter)
             adjscore, ibalter = self.applymove(move, ibalter)
             ongoingscore += adjscore
             if ongoingscore<score:
@@ -308,23 +311,36 @@ class SBP():
                 
         return score
         
-    def applymove(self, move, r, c, ib):
-        adjust = move[1]
-        x = r + adjust[0]
         
-        y = c + adjust[1]
+    def applymove(self, move, ib):
         
-        swap = ib[x][y]
-        if swap==0:
-            print("ERROR:")
-            printboard(ib)
-        ib[x][y] = 0
-        ib[r][c] = swap
-        posgb = self.gb[swap]
-        old = abs(posgb[0] - x) + abs(posgb[1] - y)
-        new = abs(posgb[0] - r) + abs(posgb[1] - c)
-        adjscore = new - old
-        return (x,y, adjscore, ib)
+        l = move.piece.length()
+        newempty = self.combo(move.empty, SBP.times(Compass.opp(move.dir), l))
+        positions = ib.getpiece(id=move.piece.id).posits
+        before = self.evalscore(move.piece)
+        for i in range(len(positions)):
+            positions[i] = self.combo(positions[i], move.dir)
+            r,c = positions[i]
+            ib.matrix[r][c] = move.piece.id
+        after = self.evalscore(move.piece)
+        adj = after-before
+        return adj, ib, newempty
+        
+    def evalscore(self, piece):
+        if piece.id in self.goal:
+            x, y = self.goal[piece.id][0]
+            r, c = piece.posits[0]
+            score =  abs(x-r) + abs(y-c)
+        return 0
+        
+        
+            
+    def times(t,n):
+        r,c = t
+        r*=n
+        c*=n
+        return (r,c)
+        
         
 class Compass(Enum):
     LEFT = (0,-1)
@@ -374,6 +390,9 @@ class Piece():
 
     def tile(self):
         return len(self.posits) == 0
+        
+    def length(self):
+        return len(self.posits)
 
     def setDirs(self):
         if self.tile():
