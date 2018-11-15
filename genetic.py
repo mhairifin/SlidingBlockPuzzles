@@ -7,7 +7,7 @@ def main():
     finsbp = [[1,2,3,4],[5,6,7,8],[9,0,10,11], [12, 13, 14, 15]]
     init = [[1,2,3,4], [5,6,7,8], [9, 10, 0, 11], [12,13,14,15]]
     rounds = 20
-    length = 1
+    length = 7
     popsize = 100
     puzzle = SBP(initsbp, finsbp, rounds, length, popsize)
     print(str(puzzle.sol.seq) + " with score " + str(puzzle.sol.score) + " and solution length " + str(puzzle.sol.solpos+1))
@@ -44,13 +44,19 @@ def getavg(select):
     for i in select:
         tot+=i.score
     return tot/len(select)
-        
 
+class Board():
+    def __init__(self, problem, pieces):
+        self.matrix = problem
+        self.pieces = pieces
+
+    def copy(self):
+        return Board(self.board, self.pieces)
         
 class SBP():
     def __init__(self, problem, goal, rounds, length, popsize):
-        self.zero = SBP.findzero(problem)
-        self.problem = problem
+        self.zero = SBP.findzeros(problem)
+        self.board = Board(problem, pieces)
         self.gb = SBP.getgoal(goal)
         self.pop = self.getpop(problem, length, popsize)
         self.sel = self.select()
@@ -73,13 +79,24 @@ class SBP():
             elif el.score == self.sol.score and el.solpos<self.sol.solpos:
                 self.sol = el
             c += 1
+
+    def piecesFromMatrix(problem):
+        pieces = {}
+        for r in range(len(problem)):
+            for c in range(len(problem[r])):
+                if problem[r][c] in pieces:
+                    pieces[problem[r][c]].posits.append((r,c))
+                else:
+                    pieces[problem[r][c]] = Piece(problem[r][c], (r,c))
+
+        return pieces
+
+    def getPieces(problem):
+        return piecesFromMatrix(problem)
+                
     
     def getgoal(goal):
-        pos = {}
-        for i in range(len(goal)):
-            for j in range(len(goal[i])):
-                pos[goal[i][j]] = [i,j]
-        return pos
+        return piecesFromMatrix(goal)
 
     def keepgoing(self):
         scores = [seq.score for seq in self.pop]
@@ -99,8 +116,10 @@ class SBP():
         
     def getpop(self, ib, l, popsize):
         pop = []
+        zeros = self.findzeros(ib)
+        score = self.manhattan(ib)
         for i in range(popsize):
-            pop.append(self.getsequence(l, ib))
+            pop.append(self.getsequence(l, ib, zeros=zeros, ongoingscore=score))
         return pop
         
     def select(self):
@@ -119,6 +138,7 @@ class SBP():
         crosses += select
         return crosses
 
+    # TODO: update legal for pieces of arbitrary size
     def legal(move,r,c,size):
         rnew = r+move[1][0]
         cnew = c+move[1][1]
@@ -127,8 +147,8 @@ class SBP():
                     
     def getchild(self, mum, dad):
         child = []
-        ibalter = [x[:] for x in self.problem]
-        r,c = self.zero
+        ibalter = [x[:] for x in self.board.matrix]
+        zeros = self.zero
         score = float("inf")
         solpos = -1
         
@@ -198,13 +218,15 @@ class SBP():
                 
         return Sequence(child, score, ibalter, solpos)
     
-    def findzero(ib):
+    def findzeros(ib):
+        zeros=[]
         for i in range(len(ib)):
             for j in range(len(ib[0])):
                 if ib[i][j] == 0:
-                    return (i,j)
+                    zeros.append((i,j))
+        return zeros
                 
-    def getvalidmove(r,c, size):
+    def getvalidmove(self, zeros, size):
         possmoves = []
         if r > 0:
             possmoves.append(('U',[-1, 0]))
@@ -216,17 +238,23 @@ class SBP():
             possmoves.append(('R', [0, 1]))
         num = random.randint(1,len(possmoves))
         return possmoves[num-1]
+
+    def validmove(self, zeros, board):
         
-    def getsequence(self, length, ib):
-        r, c = SBP.findzero(ib)
+
+    # calculate manhattan before running get sequence
+    def getsequence(self, length, ib, ongoingscore = None, zeros = None):
+        if zeros = None:
+            zeros = SBP.findzeros(ib) # calculate before getsequence
         ibalter = [x[:] for x in ib]
         seq = []
         score = float("inf") #arbitrarily high number
-        ongoingscore = self.manhattan(ib)
+        if ongoingscore = None:
+            ongoingscore = self.manhattan(ib) #calculate before getsequence
         solpos = -1;
         for i in range(length):
-            move = SBP.getvalidmove(r,c,len(ibalter))
-            r,c, adjscore, ibalter = self.applymove(move, r, c, ibalter)
+            move, zeros = SBP.getvalidmove(zeros,len(ibalter))
+            adjscore, ibalter = self.applymove(move, ibalter)
             ongoingscore += adjscore
             if ongoingscore<score:
                 score = ongoingscore
@@ -261,6 +289,12 @@ class SBP():
         new = abs(posgb[0] - r) + abs(posgb[1] - c)
         adjscore = new - old
         return (x,y, adjscore, ib)
+
+class Move():
+    def __init__(self, empty, direction, piece):
+        self.empty = empty
+        self.dir = direction # of piece or of empty?? - probably of piece
+        self.describe = "Move " + piece.id + " one space to the " + self.dir
         
 class Sequence():
     def __init__(self, seq, score, ib, sol):
@@ -275,7 +309,35 @@ class Sequence():
         self.ib = second.ib
         if second.solpos != -1:
             self.solpos = second.solpos+len(self.seq)
-    
+
+class Piece():
+    def __init__(self, i, pos):
+        self.id = i
+        self.posits = [pos]
+        self.dir = Dir.NEITHER
+
+    def addpos(self, pos):
+        self.posits.append(pos)
+
+    def tile(self):
+        return len(self.posits) == 0
+
+    def setDirs(self):
+        if self.tile():
+            self.dir = BOTH
+        else:
+            if self.posits[0][0] == self.posits[1][0]:
+                self.dir = Dir.HORIZONTAL
+            else:
+                self.dir = Dir.VERTICAL
+        
+class Dir(Enum):
+    VERTICAL = [1,0]
+    HORIZONTAL = [0,1]
+    BOTH = [1,1]
+    NEITHER = [0,0]
+
+
 def printboard(ib):
     for i in range(len(ib)):
         for j in range(len(ib[i])):

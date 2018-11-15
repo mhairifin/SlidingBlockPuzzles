@@ -1,5 +1,11 @@
 import random
 import heapq
+'''
+Very basic genetic algorithm - no extension, no mutation, no local improvement.
+Solves simple sliding block puzzles that take under 10 moves, and does not deal
+with blocks being larger than one tile or multiple empty slots
+Nevertheless, solves what it was designed to solve.
+'''
 
 def main():
     initsbp = [[1, 2, 3, 4],[6, 9, 0, 8],[5, 10, 7, 11], [12, 13, 14, 15]]
