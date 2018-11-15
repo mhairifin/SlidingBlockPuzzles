@@ -1,6 +1,7 @@
 import random
 import heapq
 import statistics as stats
+from enum import Enum
 
 def main():
     initsbp = [[1, 2, 3, 4],[6, 9, 0, 8],[5, 10, 7, 11], [12, 13, 14, 15]]
@@ -53,7 +54,14 @@ class Board():
     def copy(self):
         return Board(self.board, self.pieces)
         
+    def getpiece(self, loc = (-1,-1), id = None):
+        if id == None:
+            r,c = loc
+            id = self.matrix[r][c]
+        return self.pieces[id]
+        
 class SBP():
+    EMPTY = 0
     def __init__(self, problem, goal, rounds, length, popsize):
         self.zero = SBP.findzeros(problem)
         self.board = Board(problem, pieces)
@@ -225,21 +233,49 @@ class SBP():
                 if ib[i][j] == 0:
                     zeros.append((i,j))
         return zeros
-                
-    def getvalidmove(self, zeros, size):
-        possmoves = []
-        if r > 0:
-            possmoves.append(('U',[-1, 0]))
-        if r < size-1:
-            possmoves.append(('D', [1, 0]))
-        if c > 0:
-            possmoves.append(('L', [0, -1]))
-        if c < size-1:
-            possmoves.append(('R', [0, 1]))
+
+    def getvalidmove(self, zeros, board):
+        adjzeros = [z for z in zeros if self.adj(z,board)]
+        possmoves = [self.getMoves(z) for z in adjzeros]
         num = random.randint(1,len(possmoves))
         return possmoves[num-1]
-
-    def validmove(self, zeros, board):
+        
+    def getMoves(z, board):
+        dirs = {'u': Compass.UP, 'd': Compass.DOWN, 'r': Compass.RIGHT, 'l': Compass.LEFT}
+        moves = []
+        for k,v in dirs:
+            if SBP.check(z, board, k):
+                l = SBP.add(z, v)
+                moves.append(Move(z, Compass.opp(v), board.getpiece(loc=l)))
+            
+    def add(t1, t2):
+        x,y = t1
+        s,p = t2
+        return (x+s, y+p)
+        
+    def adj(self, z, board):
+        return self.check('u') or self.check('d') or self.check('r') or self.check('l')
+            
+    def check(self, z, board, dir):
+        dirs = {'u': Compass.UP, 'd': Compass.DOWN, 'r': Compass.RIGHT, 'l': Compass.LEFT}
+        r, c = z
+        cr, cc = dirs[dir]
+        r += cr
+        c += cc
+        return SBP.within(r, c, board) and board.matrix[r][c] != SBP.EMPTY and SBP.moveable(r,c,board,dirs[dir])
+        
+    def moveable(r,c,board, dir):
+        d = board.pieces(board.matrix[r][c]).dir
+        if d == Dir.BOTH:
+            return True
+        elif dir == Compass.UP or dir == Compass.DOWN):
+            return d == Dir.VERTICAL
+        else:
+            return d == Dir.HORIZONTAL
+        
+    def within(r,c,board):
+        size = len(board.matrix)
+        return r >= 0 and c >= 0 and r<size and c<size
         
 
     # calculate manhattan before running get sequence
@@ -289,11 +325,28 @@ class SBP():
         new = abs(posgb[0] - r) + abs(posgb[1] - c)
         adjscore = new - old
         return (x,y, adjscore, ib)
+        
+class Compass(Enum):
+    LEFT = (0,-1)
+    RIGHT = (0,1)
+    UP = (-1,0)
+    DOWN = (1,0)
+    
+    def opp(dir):
+        if dir == Compass.LEFT:
+            return Compass.RIGHT
+        if dir == Compass.RIGHT:
+            return Compass.LEFT
+        if dir == Compass.UP:
+            return Compass.DOWN
+        if dir == Compass.DOWN:
+            return Compass.UP
 
 class Move():
     def __init__(self, empty, direction, piece):
         self.empty = empty
         self.dir = direction # of piece or of empty?? - probably of piece
+        self.piece = piece
         self.describe = "Move " + piece.id + " one space to the " + self.dir
         
 class Sequence():
@@ -304,7 +357,7 @@ class Sequence():
         self.solpos = sol
 
     def extend(self, second):
-        self.seq+=second.seq
+        self.seq += second.seq
         self.score=second.score
         self.ib = second.ib
         if second.solpos != -1:
