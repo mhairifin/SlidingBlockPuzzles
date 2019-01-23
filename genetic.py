@@ -9,10 +9,7 @@ debug = False
 def test():
     i = [[1,2], [0,3]]
     f = [[1,2], [3,0]]
-    rounds = 5
-    length = 2
-    popsize = 100
-    puzzle = SBP(i, f, rounds, length, popsize)
+    puzzle = SBP(i, f)
     
 
 def main():
@@ -21,10 +18,7 @@ def main():
     init = [[1,2,3,4], [5,6,7,8], [9, 10, 0, 11], [12,13,14,15]]
     i = [[1,2], [0,3]]
     f = [[1,2], [3,0]]
-    rounds = 5
-    length = 10
-    popsize = 100
-    puzzle = SBP(initsbp, finsbp, rounds, length, popsize)
+    puzzle = SBP(initsbp, finsbp, rounds)
     if puzzle.sol == None:
         print(str(puzzle.pop[0].seq))
     else:
@@ -115,33 +109,15 @@ class SBP():
     
     dirs = {'u': Compass.UP, 'd': Compass.DOWN, 'r': Compass.RIGHT, 'l': Compass.LEFT}
     
-    def __init__(self, problem, goal, rounds, length, popsize):
+    def __init__(self, problem, goal):
+        length = 7
+        popsize = 100
         self.sol = None
         self.zero = SBP.findzeros(problem)
         self.board = Board(problem, SBP.getPieces(problem))
         self.gb = SBP.getgoal(goal)
 
         self.found = False
-
-        """
-        print()
-        printboard(problem)
-        print("score: "+str(self.manhattan(self.board)))
-        seq1 = self.getsequence(2, self.board)
-        seq1.show()
-        printboard(seq1.ib.matrix)
-        print("score: " + str(seq1.score))
-        print("alt score: "+str(self.manhattan(seq1.ib)))
-        seq2 = self.getsequence(2, self.board)
-        seq2.show()
-        printboard(seq2.ib.matrix)
-        print("score: " + str(seq2.score))
-        print("alt score: "+str(self.manhattan(seq2.ib)))
-
-        printboard(goal)
-        print("goal score: "+str(self.manhattan(self.gb)))
-        
-        """
         
         self.pop = self.getpop(self.board, length, popsize)
         self.sel = self.select()
@@ -450,7 +426,27 @@ class SBP():
         r*=n
         c*=n
         return (r,c)
-        
+
+class Level():
+    EMPTY = 0
+    def __init__(self, size, numPieces):
+        self.end = self.createBoard(size, numPieces)
+        dist = 8
+        #self.start = self.genStart(dist)
+
+    def createBoard(self, size, numPieces):
+        pieces = list(range(1, numPieces+1))
+        empties = (size**2)-numPieces
+        for item in range(empties):
+            pieces.append(Level.EMPTY)
+        random.shuffle(pieces)
+        board = []
+        for i in range(size):
+            row = []
+            for j in range(size):
+                row.append(pieces[i*size+j])
+            board.append(row)
+        return board
         
 
 class Move():
@@ -522,7 +518,11 @@ def printboard(ib):
             print(str(ib[i][j]) + "\t", end="")
         print()
     print()
+
+def levelstuff():
+    level1 = Level(4, 15)
+    printboard(level1.end)
     
     
 if __name__ == "__main__":
-    main()
+    levelstuff()
