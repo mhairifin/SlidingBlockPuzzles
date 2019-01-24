@@ -3,6 +3,7 @@ import heapq
 import copy
 import statistics as stats
 from enum import Enum
+import sys, pygame
 
 debug = False
 
@@ -115,6 +116,7 @@ class SBP():
         self.sol = None
         self.zero = SBP.findzeros(problem)
         self.board = Board(problem, SBP.getPieces(problem))
+        self.goal = goal
         self.gb = SBP.getgoal(goal)
 
         self.found = False
@@ -126,16 +128,18 @@ class SBP():
         avg = []
         i=0
         self.lastavg = None
+        self.curravg = None
         self.inc = 0
         while self.keepgoing():
-        #while i< 1:
             self.pop = self.crossover(self.sel)
+            self.lastsel = self.sel
             self.sel = self.select()
-            self.lastavg = getavg(self.sel)
+            self.lastavg = self.curravg
+            self.curravg = getavg(self.sel)
             if debug:
                 print("END GENERATION " + str(i))
                 print("WITH POP AVERAGE: " + str(getavg(self.pop)))
-                print("WITH ELITE AVERAGE: " + str(self.lastavg))
+                print("WITH ELITE AVERAGE: " + str(self.curravg))
             i+=1
         self.sol = Sequence("bad", float("inf"), "bad", "bad")
         c = 0
@@ -166,27 +170,38 @@ class SBP():
         return SBP.piecesFromMatrix(goal)
 
     def keepgoing(self):
-        avg = getavg(self.sel)
-        if avg == self.lastavg:
-            self.inc += 1
-        else:
-            self.inc = 0
+        if not self.found:
+            if self.lastavg != None and self. curravg != None and self.lastavg < self.curravg:
+                print("AVERAGE INCREASED")
+                for item in self.sel:
+                    seeseqs(self.sel)
+                for item in self.lastsel:
+                    seeseqs(self.sel)
+                return False
+            if self.curravg == self.lastavg:
+                self.inc += 1
+            else:
+                self.inc = 0
 
-        if avg == 0:
-            self.found = True
-            self.inc = 0
-            return False
-        elif self.inc%5 == 0:
-            self.extend()
+            if self.curravg == 0:
+                self.found = True
+                self.inc = 0
+                return False
+            elif self.inc%5 == 0:
+                self.extend()
+                return True
+            elif self.inc == 51:
+                print("Halting without solution")
+                return False
             return True
-        elif self.inc == 51:
-            print("Halting without solution")
-            return False
-        return True
+        else:
+            self.inc += 1
+            print(self.inc)
+            return self.inc <= 20
                
     def extend(self):
         for i in range(len(self.pop)):
-            self.pop[i].extend(self.getsequence(7, self.pop[i].ib))
+            self.pop[i].extend(self.getsequence(7, self.pop[i].ib, ongoingscore = self.pop[i].score))
         
     def getpop(self, ib, l, popsize):
         pop = []
@@ -201,7 +216,7 @@ class SBP():
         return best
         
     def getscore(seq):
-        return int(seq.score)
+        return int(seq.score*100+seq.solpos) #temporary solution -- fix later
     
     def crossover(self, select):
         crosses = []
@@ -283,7 +298,7 @@ class SBP():
                     score=totd
                     
             else:
-                move = self.getvalidmove(zeros, ibdad)
+                move = SBP.getvalidmove(ibdad)
                 adjd, ibdad, newempty = self.applymove(move, ibdad)
                 #zeros = SBP.replace(zeros, move.empty, newempty)
                 #zeros = SBP.findzeros(ibalter.matrix)
@@ -306,22 +321,27 @@ class SBP():
                     zeros.append((i,j))
         return zeros
         
-    def getvalidmove(self, zeros, board):
+    def getvalidmove(board):
         zeros = SBP.findzeros(board.matrix)
         possmoves = []
         for z in zeros:
-            possmoves += self.getMoves(z, board)
+            possmoves += SBP.getMoves(z, board)
         num = random.randint(0,len(possmoves)-1)
-        return possmoves[num] 
-        
-    def getMoves(self, z, board):
+        try:
+            return possmoves[num]
+        except:
+            printboard(board.matrix)
+            print(zeros)
+            print(len(possmoves))
+   
+    def getMoves(z, board):
         moves = []
         rz, cz = z
         if board.matrix[rz][cz] != SBP.EMPTY:
             print("BAD!!!!")
         for k in SBP.dirs:
             r,c = SBP.add(z, SBP.dirs[k])
-            if self.check(r,c,board) and SBP.moveable(r,c, board, k): # check there is something in that space and it can move
+            if SBP.check(r,c,board) and SBP.moveable(r,c, board, k): # check there is something in that space and it can move
                 moves.append(Move(z, Compass.opp(SBP.dirs[k]), board.getpiece(loc=(r,c))))
         return moves
         
@@ -330,15 +350,8 @@ class SBP():
         x,y = t1
         s,p = t2
         return (x+s, y+p)
-        
-    def adj(self, z, board):
-        dirs = ['u', 'd', 'l', 'r']
-        check = False
-        for d in dirs:
-            check = check or self.check(z,board,d)
-        return check
             
-    def check(self, r, c, board):
+    def check(r, c, board):
         return SBP.within(r, c, board) and board.matrix[r][c] != SBP.EMPTY
         
     def moveable(r,c,board, dir):
@@ -370,13 +383,13 @@ class SBP():
         score = float("inf") #arbitrarily high number
         if ongoingscore == None:
             ongoingscore = self.manhattan(board) 
-        solpos = -1; 
+        solpos = -1;
         for i in range(length):
-            move = self.getvalidmove(zeros,ibalter)
+            move = SBP.getvalidmove(ibalter)
             adjscore, ibalter, newempty = self.applymove(move, ibalter)
             #zeros = SBP.replace(zeros, move.empty, newempty)
             #zeros = SBP.findzeros(ibalter.matrix)
-            ongoingscore += adjscore
+            ongoingscore = adjscore
             if ongoingscore<score:
                 score = ongoingscore
             seq.append(move)
@@ -398,12 +411,13 @@ class SBP():
             score =  abs(x-r) + abs(y-c)
             return score
         return 0
-        
-    def applymove(self, move, ib):
+
+    def domove(move, ib):
+        if not SBP.legal(move, ib):
+            print("How the fuck did this happen")
         l = move.piece.length()
         newempty = SBP.add(move.empty, SBP.times(Compass.opp(move.dir), l))
         positions = ib.getpiece(id=move.piece.id).posits
-        before = self.evalscore(move.piece)
         for i in range(len(positions)):
             rold, cold = positions[i]
             positions[i] = SBP.add(positions[i], move.dir)
@@ -416,8 +430,16 @@ class SBP():
             
         ib.getpiece(id=move.piece.id).posits = positions
         ib.matrix[newempty[0]][newempty[1]] = SBP.EMPTY
-        after = self.evalscore(move.piece)
-        adj = after-before
+        return move, ib, newempty
+        
+    def applymove(self, move, ib):
+        if not SBP.legal(move, ib):
+            print("How the fuck did this happen")
+        #before = self.evalscore(move.piece)
+        move, ib, newempty = SBP.domove(move, ib)
+        #after = self.evalscore(move.piece)
+        #adj = after-before
+        adj = self.manhattan(ib)
         return adj, ib, newempty
         
             
@@ -429,10 +451,9 @@ class SBP():
 
 class Level():
     EMPTY = 0
-    def __init__(self, size, numPieces):
+    def __init__(self, size, numPieces, dist):
         self.end = self.createBoard(size, numPieces)
-        dist = 8
-        #self.start = self.genStart(dist)
+        self.genStart(dist)
 
     def createBoard(self, size, numPieces):
         pieces = list(range(1, numPieces+1))
@@ -446,7 +467,20 @@ class Level():
             for j in range(size):
                 row.append(pieces[i*size+j])
             board.append(row)
-        return board
+        return Board(board, SBP.piecesFromMatrix(board))
+
+    def genStart(self, dist):
+        self.start = self.end.copy()
+        moves = []
+        for num in range(dist):
+            move = SBP.getvalidmove(self.start)
+            move, self.start, empty = SBP.domove(move, self.start)
+            moves.append(move)
+        for move in moves:
+            move.prin()
+        print("-------------")
+        print("Distance: " + str(len(moves)))
+        print("-------------")
         
 
 class Move():
@@ -520,8 +554,107 @@ def printboard(ib):
     print()
 
 def levelstuff():
-    level1 = Level(4, 15)
-    printboard(level1.end)
+    length = 4
+    dist = 25
+    level1 = Level(length, length*length-1, dist)
+    print("Start: ")
+    printboard(level1.start.matrix)
+    print("Goal: ")
+    printboard(level1.end.matrix)
+    puzzle = SBP(level1.start.matrix, level1.end.matrix)
+    sollen = puzzle.sol.solpos+1
+    if puzzle.sol == None:
+        print(str(puzzle.pop[0].seq))
+    else:
+        print("score " + str(puzzle.sol.score) + " and solution length " + str(puzzle.sol.solpos+1))
+        puzzle.sol.show()
+    if sollen != 0:
+        visualize(puzzle)
+        if sollen <= dist:
+            print("Well done!")
+
+class Visual():
+    BLACK = 0,0,0
+    WHITE = 255,255,255
+    def __init__(self, puzzle):
+        self.puzzle = puzzle
+        self.board = puzzle.board.copy()
+        self.length = len(puzzle.board.matrix)
+        pygame.init()
+        size = 700, 300
+        self.screen = pygame.display.set_mode(size)
+        self.screen.fill(Visual.WHITE)
+        pygame.display.flip()
+        self.pieceIms = Visual.generateIms(puzzle.board.pieces)
+
+    def generateIms(pieces):
+        ims = {}
+        myfont = pygame.font.SysFont('Arial', 30)
+        for id in pieces:
+            ims[id] = myfont.render(str(id), False, Visual.BLACK)
+        return ims
+
+    def drawGoal(self):
+        w,h = 40,40
+        y = 50
+        startx = self.length*w+3*y
+        for i in range(self.length):
+            x = startx
+            for j in range(self.length):
+                id = self.puzzle.goal[i][j]
+                pygame.draw.rect(self.screen, Visual.BLACK, [x, y, w, h], 2)
+                self.screen.blit(self.pieceIms[id], (x+4,y+4))
+                x += w
+            y += h
+
+    def drawBoard(self):
+        w,h = 40,40
+        y = 50
+        for i in range(self.length):
+            x = 50
+            for j in range(self.length): 
+                pygame.draw.rect(self.screen, Visual.BLACK, [x, y, w, h], 2)
+                x += w
+            y += h
+
+    def drawPieces(self):
+        w,h = 40,40
+        y = 50
+        for i in range(self.length):
+            x = 50
+            for j in range(self.length):
+                id = self.board.matrix[i][j]
+                self.screen.blit(self.pieceIms[id], (x+4,y+4))
+                x += w
+            y += h
+
+    def drawState(self):
+        self.screen.fill(Visual.WHITE)
+        self.drawBoard()
+        self.drawPieces()
+        self.drawGoal()
+        pygame.display.flip()
+
+def visualize(puzzle):
+    vis = Visual(puzzle)
+    print("VISUAL")
+    print("-----------------")
+
+    start = pygame.time.get_ticks()
+    i=0
+    j=0
+    done = False
+    while not done:
+        if i % 500000 == 0 and j<=puzzle.sol.solpos:
+            move, vis.board, empty = SBP.domove(puzzle.sol.seq[j], vis.board)
+            print(puzzle.sol.seq[j].describe)
+            j+=1
+            vis.drawState()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                done = True
+        i+=1
+    pygame.quit()
     
     
 if __name__ == "__main__":
