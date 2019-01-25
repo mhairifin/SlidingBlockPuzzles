@@ -249,67 +249,66 @@ class SBP():
         solpos = -1
         
         for i in range(len(mum.seq)):
-        
-            ibmum = ibalter.copy()
-            ibdad = ibalter.copy()
-            
-            mumlegal = SBP.legal(mum.seq[i],ibmum)
-            dadlegal = SBP.legal(dad.seq[i],ibdad)
-            
-            if mumlegal and dadlegal:
-            
-                adjm, ibmum, mumempty = self.applymove(mum.seq[i], ibmum)
-                adjd, ibdad, dadempty = self.applymove(dad.seq[i], ibdad)
-                
-                totm = self.manhattan(ibmum)
-                totd = self.manhattan(ibdad)
-                
-                chance = random.random()
-                
-                if (totm < totd and chance<0.8) or (totm>=totd and chance >= 0.8):
+
+            rand = random.random()
+            if rand > 0.8:
+                ibmum = ibalter.copy()
+                ibdad = ibalter.copy()
+
+                mumlegal = SBP.legal(mum.seq[i],ibmum)
+                dadlegal = SBP.legal(dad.seq[i],ibdad)
+
+                if mumlegal and dadlegal:
+
+                    adjm, ibmum, mumempty = self.applymove(mum.seq[i], ibmum)
+                    adjd, ibdad, dadempty = self.applymove(dad.seq[i], ibdad)
+
+                    totm = self.manhattan(ibmum)
+                    totd = self.manhattan(ibdad)
+
+                    chance = random.random()
+
+                    if (totm < totd and chance<0.8) or (totm>=totd and chance >= 0.8):
+                        child.append(mum.seq[i])
+                        ibalter = ibmum
+                        if totm<score:
+                            score=totm
+                    else:
+                        child.append(dad.seq[i])
+                        ibalter = ibdad
+                        if totd<score:
+                            score=totd
+
+                elif mumlegal:
+                    adjm, ibmum, mumempty = self.applymove(mum.seq[i], ibmum)
+                    totm = self.manhattan(ibmum)
                     child.append(mum.seq[i])
                     ibalter = ibmum
-                    #zeros = SBP.replace(zeros, mum.seq[i].empty, mumempty)
-                    #zeros = SBP.findzeros(ibalter.matrix)
                     if totm<score:
                         score=totm
-                else:
+
+                elif dadlegal:
+                    adjd, ibdad, dadempty = self.applymove(dad.seq[i], ibdad)
+                    totd = self.manhattan(ibdad)
                     child.append(dad.seq[i])
                     ibalter = ibdad
-                    #zeros = SBP.replace(zeros, dad.seq[i].empty, dadempty)
-                    #zeros = SBP.findzeros(ibalter.matrix)
                     if totd<score:
                         score=totd
-                        
-            elif mumlegal:
-                adjm, ibmum, mumempty = self.applymove(mum.seq[i], ibmum)
-                totm = self.manhattan(ibmum)
-                child.append(mum.seq[i])
-                ibalter = ibmum
-                #zeros = SBP.replace(zeros, mum.seq[i].empty, mumempty)
-                #zeros = SBP.findzeros(ibalter.matrix)
-                if totm<score:
-                    score=totm
-                    
-            elif dadlegal:
-                adjd, ibdad, dadempty = self.applymove(dad.seq[i], ibdad)
-                totd = self.manhattan(ibdad)
-                child.append(dad.seq[i])
-                ibalter = ibdad
-                #zeros = SBP.replace(zeros, dad.seq[i].empty, dadempty)
-                #zeros = SBP.findzeros(ibalter.matrix)
-                if totd<score:
-                    score=totd
-                    
+
+                else:
+                    move = SBP.getvalidmove(ibalter)
+                    adjd, ibalter, newempty = self.applymove(move, ibalter)
+                    tot = self.manhattan(ibalter)
+                    child.append(move)
+                    if tot<score:
+                        score=tot
             else:
                 move = SBP.getvalidmove(ibalter)
                 adjd, ibalter, newempty = self.applymove(move, ibalter)
-                #zeros = SBP.replace(zeros, move.empty, newempty)
-                #zeros = SBP.findzeros(ibalter.matrix)
                 tot = self.manhattan(ibalter)
                 child.append(move)
-                if totd<score:
-                    score=tot
+                if tot<score:
+                    score=tot    
                     
             if score == 0 and solpos == -1:
                 solpos = i
