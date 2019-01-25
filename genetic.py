@@ -11,8 +11,7 @@ messages = False
 def test():
     i = [[1,2], [0,3]]
     f = [[1,2], [3,0]]
-    puzzle = SBP(i, f)
-    
+    puzzle = SBP(i, f)    
 
 def main():
     initsbp = [[1, 2, 3, 4],[6, 9, 0, 8],[5, 10, 7, 11], [12, 13, 14, 15]]
@@ -177,11 +176,13 @@ class SBP():
         if not self.found:
             if self.lastavg != None and self. curravg != None and self.lastavg < self.curravg:
                 print("AVERAGE INCREASED")
+                """
                 for item in self.sel:
                     seeseqs(self.sel)
                 for item in self.lastsel:
                     seeseqs(self.sel)
-                return False
+                """
+                return True
             if self.curravg == self.lastavg:
                 self.inc += 1
             else:
@@ -190,7 +191,7 @@ class SBP():
             if self.curravg == 0:
                 self.found = True
                 self.inc = 0
-                return False
+                return True
             elif self.inc%5 == 0:
                 self.extend()
                 return True
@@ -200,8 +201,7 @@ class SBP():
             return True
         else:
             self.inc += 1
-            print(self.inc)
-            return self.inc <= 20
+            return self.inc <= 5
                
     def extend(self):
         for i in range(len(self.pop)):
@@ -220,7 +220,7 @@ class SBP():
         return best
         
     def getscore(seq):
-        return int(seq.score*100+seq.solpos) #temporary solution -- fix later
+        return int(seq.score)#*100+seq.solpos) #temporary solution -- fix later
     
     def crossover(self, select):
         crosses = []
@@ -249,9 +249,8 @@ class SBP():
         solpos = -1
         
         for i in range(len(mum.seq)):
-
             rand = random.random()
-            if rand > 0.8:
+            if rand > -1:
                 ibmum = ibalter.copy()
                 ibdad = ibalter.copy()
 
@@ -321,11 +320,6 @@ class SBP():
             for j in range(len(ib[0])):
                 if ib[i][j] == 0:
                     zeros.append((i,j))
-        if len(zeros) > 1:
-            print("\n")
-            print("\n")
-            print("REALLY BAD")
-            printboard(ib.matrix)
         return zeros
         
     def getvalidmove(board):
