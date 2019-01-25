@@ -5,7 +5,8 @@ import statistics as stats
 from enum import Enum
 import sys, pygame
 
-debug = False
+debug = True
+messages = False
 
 def test():
     i = [[1,2], [0,3]]
@@ -91,12 +92,15 @@ class Compass():
 
 
 class Board():
-    def __init__(self, problem, pieces):
+    def __init__(self, problem, pieces=None):
         self.matrix = problem
-        self.pieces = copy.deepcopy(pieces)
+        if pieces == None:
+            pieces = SBP.piecesFromMatrix(problem)
+        else:
+            self.pieces = copy.deepcopy(pieces)
 
     def copy(self):
-        return Board(copy.deepcopy(self.matrix), self.pieces)
+        return Board(copy.deepcopy(self.matrix), copy.deepcopy(self.pieces))
         
     def getpiece(self, loc = (-1,-1), id = None):
         if id == None:
@@ -111,17 +115,17 @@ class SBP():
     dirs = {'u': Compass.UP, 'd': Compass.DOWN, 'r': Compass.RIGHT, 'l': Compass.LEFT}
     
     def __init__(self, problem, goal):
-        length = 7
-        popsize = 100
+        self.length = 7
+        self.popsize = 100
         self.sol = None
         self.zero = SBP.findzeros(problem)
         self.board = Board(problem, SBP.getPieces(problem))
         self.goal = goal
         self.gb = SBP.getgoal(goal)
-
+                
+    def solve(self):
         self.found = False
-        
-        self.pop = self.getpop(self.board, length, popsize)
+        self.pop = self.getpop(self.board, self.length, self.popsize)
         self.sel = self.select()
         if debug:
             print("END INITIAL POPULATION")
@@ -149,7 +153,7 @@ class SBP():
             elif el.score == self.sol.score and el.solpos<self.sol.solpos:
                 self.sol = el
             c += 1
-
+        
     def piecesFromMatrix(problem):
         pieces = {}
         for r in range(len(problem)):
@@ -298,15 +302,14 @@ class SBP():
                     score=totd
                     
             else:
-                move = SBP.getvalidmove(ibdad)
-                adjd, ibdad, newempty = self.applymove(move, ibdad)
+                move = SBP.getvalidmove(ibalter)
+                adjd, ibalter, newempty = self.applymove(move, ibalter)
                 #zeros = SBP.replace(zeros, move.empty, newempty)
                 #zeros = SBP.findzeros(ibalter.matrix)
-                totd = self.manhattan(ibdad)
-                child.append(dad.seq[i])
-                ibalter = ibdad
+                tot = self.manhattan(ibalter)
+                child.append(move)
                 if totd<score:
-                    score=totd
+                    score=tot
                     
             if score == 0 and solpos == -1:
                 solpos = i
@@ -319,6 +322,11 @@ class SBP():
             for j in range(len(ib[0])):
                 if ib[i][j] == 0:
                     zeros.append((i,j))
+        if len(zeros) > 1:
+            print("\n")
+            print("\n")
+            print("REALLY BAD")
+            printboard(ib.matrix)
         return zeros
         
     def getvalidmove(board):
@@ -476,12 +484,13 @@ class Level():
             move = SBP.getvalidmove(self.start)
             move, self.start, empty = SBP.domove(move, self.start)
             moves.append(move)
-        for move in moves:
-            move.prin()
-        print("-------------")
-        print("Distance: " + str(len(moves)))
-        print("-------------")
-        
+        if messages:
+            for move in moves:
+                move.prin()
+            print("-------------")
+            print("Distance: " + str(len(moves)))
+            print("-------------")
+
 
 class Move():
     def __init__(self, empty, direction, piece):
@@ -557,20 +566,23 @@ def levelstuff():
     length = 4
     dist = 25
     level1 = Level(length, length*length-1, dist)
-    print("Start: ")
-    printboard(level1.start.matrix)
-    print("Goal: ")
-    printboard(level1.end.matrix)
+    if messages:
+        print("Start: ")
+        printboard(level1.start.matrix)
+        print("Goal: ")
+        printboard(level1.end.matrix)
     puzzle = SBP(level1.start.matrix, level1.end.matrix)
+    puzzle.solve()
     sollen = puzzle.sol.solpos+1
     if puzzle.sol == None:
         print(str(puzzle.pop[0].seq))
     else:
         print("score " + str(puzzle.sol.score) + " and solution length " + str(puzzle.sol.solpos+1))
-        puzzle.sol.show()
+        if messages:
+            puzzle.sol.show()
     if sollen != 0:
         visualize(puzzle)
-        if sollen <= dist:
+        if sollen <= dist and messages:
             print("Well done!")
 
 class Visual():
@@ -586,6 +598,7 @@ class Visual():
         self.screen.fill(Visual.WHITE)
         pygame.display.flip()
         self.pieceIms = Visual.generateIms(puzzle.board.pieces)
+        self.col = Visual.BLACK
 
     def generateIms(pieces):
         ims = {}
@@ -613,7 +626,7 @@ class Visual():
         for i in range(self.length):
             x = 50
             for j in range(self.length): 
-                pygame.draw.rect(self.screen, Visual.BLACK, [x, y, w, h], 2)
+                pygame.draw.rect(self.screen, self.col, [x, y, w, h], 2)
                 x += w
             y += h
 
@@ -635,10 +648,15 @@ class Visual():
         self.drawGoal()
         pygame.display.flip()
 
+    def changeColor(self, color):
+        self.col = color
+
 def visualize(puzzle):
     vis = Visual(puzzle)
-    print("VISUAL")
-    print("-----------------")
+    GREEN = 0, 255, 0
+    if messages:
+        print("VISUAL")
+        print("-----------------")
 
     start = pygame.time.get_ticks()
     i=0
@@ -647,8 +665,12 @@ def visualize(puzzle):
     while not done:
         if i % 500000 == 0 and j<=puzzle.sol.solpos:
             move, vis.board, empty = SBP.domove(puzzle.sol.seq[j], vis.board)
-            print(puzzle.sol.seq[j].describe)
+            if messages:
+                print(puzzle.sol.seq[j].describe)
             j+=1
+            vis.drawState()
+        elif j == puzzle.sol.solpos+1:
+            vis.changeColor(GREEN)
             vis.drawState()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
