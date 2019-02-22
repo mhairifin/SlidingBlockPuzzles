@@ -4,14 +4,29 @@ import copy
 import statistics as stats
 from enum import Enum
 import sys, pygame
+from pygame import time
 
 debug = True
-messages = False
+messages = True
 
 def test():
-    i = [[1,2], [0,3]]
-    f = [[1,2], [3,0]]
-    puzzle = SBP(i, f)    
+    i = [[1,1, 0], [0,0,2], [0,0,0]]
+    f = [[0,1,1],[0,0,0], [0,0,0]]
+    puzzle = SBP(i, f)
+    for id in puzzle.gb:
+        piece = puzzle.gb[id]
+        print(piece.id)
+        print(piece.posits)
+        print(piece.dir)
+    #SBP.getvalidmove(puzzle.board).prin()
+    puzzle.solve(mutate=True)
+    sollen = puzzle.sol.solpos+1
+    if puzzle.sol == None:
+        print(str(puzzle.pop[0].seq))
+    else:
+        print("score " + str(puzzle.sol.score) + " and solution length " + str(puzzle.sol.solpos+1))
+        if messages:
+            puzzle.sol.show()
 
 def main():
     initsbp = [[1, 2, 3, 4],[6, 9, 0, 8],[5, 10, 7, 11], [12, 13, 14, 15]]
@@ -122,7 +137,8 @@ class SBP():
         self.goal = goal
         self.gb = SBP.getgoal(goal)
                 
-    def solve(self):
+    def solve(self, mutate=False):
+        self.mutate = mutate
         self.found = False
         self.pop = self.getpop(self.board, self.length, self.popsize)
         self.sel = self.select()
@@ -182,7 +198,7 @@ class SBP():
                 for item in self.lastsel:
                     seeseqs(self.sel)
                 """
-                return True
+                return False
             if self.curravg == self.lastavg:
                 self.inc += 1
             else:
@@ -195,7 +211,7 @@ class SBP():
             elif self.inc%5 == 0:
                 self.extend()
                 return True
-            elif self.inc == 51:
+            elif self.inc == 21:
                 print("Halting without solution")
                 return False
             return True
@@ -220,7 +236,7 @@ class SBP():
         return best
         
     def getscore(seq):
-        return int(seq.score)#*100+seq.solpos) #temporary solution -- fix later
+        return int(seq.score*100+seq.solpos) #temporary solution -- fix later
     
     def crossover(self, select):
         crosses = []
@@ -231,12 +247,11 @@ class SBP():
         crosses += select
         return crosses
 
-    # TODO: update legal for pieces of arbitrary size
     def legal(move, board):
         zr,zc = move.empty
         if board.matrix[zr][zc] != SBP.EMPTY:
             return False
-        mr,mc = SBP.add(move.empty, Compass.opp(move.dir))
+        mr,mc = SBP.add(move.empty, SBP.times(Compass.opp(move.dir), move.piece.length()))
         if board.matrix[mr][mc] != move.piece.id:
             return False
         return True
@@ -250,7 +265,7 @@ class SBP():
         
         for i in range(len(mum.seq)):
             rand = random.random()
-            if rand > -1:
+            if rand >= 0.05 or not self.mutate: #5% chance of mutation, or not a mutate round
                 ibmum = ibalter.copy()
                 ibdad = ibalter.copy()
 
@@ -342,7 +357,7 @@ class SBP():
             print("BAD!!!!")
         for k in SBP.dirs:
             r,c = SBP.add(z, SBP.dirs[k])
-            if SBP.check(r,c,board) and SBP.moveable(r,c, board, k): # check there is something in that space and it can move
+            if SBP.check(r,c,board) and SBP.moveable(r,c, board, SBP.dirs[k]): # check there is something in that space and it can move
                 moves.append(Move(z, Compass.opp(SBP.dirs[k]), board.getpiece(loc=(r,c))))
         return moves
         
@@ -361,8 +376,10 @@ class SBP():
             return True
         elif dir == Compass.UP or dir == Compass.DOWN:
             return d == Dir.VERTICAL
-        else:
+        elif dir == Compass.RIGHT or dir == Compass.LEFT:
             return d == Dir.HORIZONTAL
+        else:
+            return False
         
     def within(r,c,board):
         size = len(board.matrix)
@@ -415,7 +432,7 @@ class SBP():
 
     def domove(move, ib):
         if not SBP.legal(move, ib):
-            print("How the fuck did this happen")
+            print("This should not happen")
         l = move.piece.length()
         newempty = SBP.add(move.empty, SBP.times(Compass.opp(move.dir), l))
         positions = ib.getpiece(id=move.piece.id).posits
@@ -435,7 +452,7 @@ class SBP():
         
     def applymove(self, move, ib):
         if not SBP.legal(move, ib):
-            print("How the fuck did this happen")
+            print("This should not happen")
         #before = self.evalscore(move.piece)
         move, ib, newempty = SBP.domove(move, ib)
         #after = self.evalscore(move.piece)
@@ -557,7 +574,7 @@ def printboard(ib):
 
 def levelstuff():
     length = 4
-    dist = 25
+    dist = 15
     level1 = Level(length, length*length-1, dist)
     if messages:
         print("Start: ")
@@ -565,7 +582,7 @@ def levelstuff():
         print("Goal: ")
         printboard(level1.end.matrix)
     puzzle = SBP(level1.start.matrix, level1.end.matrix)
-    puzzle.solve()
+    puzzle.solve(mutate=True)
     sollen = puzzle.sol.solpos+1
     if puzzle.sol == None:
         print(str(puzzle.pop[0].seq))
@@ -577,6 +594,55 @@ def levelstuff():
         visualize(puzzle)
         if sollen <= dist and messages:
             print("Well done!")
+
+def compareDifficulty(dist, f):
+    print("Running with distance: " + str(dist))
+    length = 4
+    level1 = Level(length, length*length-1, dist)
+    
+    puzzle = SBP(level1.start.matrix, level1.end.matrix)
+    start = time.get_ticks()
+    puzzle.solve(mutate=True)
+    end = time.get_ticks()
+    sollen = puzzle.sol.solpos+1
+
+    if sollen == 0:
+        sollen = None
+
+    f.write(str(dist) + ", " + str(sollen) + ", " + str(end-start) + "\n")
+
+    print("Length: " + str(sollen))
+    print("Took "  + str(end-start) + " ms to find solution")
+
+def compareMutate(f):
+    
+    length = 4
+    dist = 25
+    level1 = Level(length, length*length-1, dist)
+    
+    puzzle = SBP(level1.start.matrix, level1.end.matrix)
+    start1 = time.get_ticks()
+    puzzle.solve()
+    end1 = time.get_ticks()
+    sollen = puzzle.sol.solpos+1
+    
+    puzzle2 = SBP(level1.start.matrix, level1.end.matrix)
+    start2 = time.get_ticks()
+    puzzle.solve(mutate=True)
+    end2 = time.get_ticks()
+    sollenm = puzzle.sol.solpos+1
+
+    if sollen == 0:
+        sollen = None
+    if sollenm == 0:
+        sollenm = None
+    
+    f.write(str(end1-start1) + ", " + str(sollen) + ", " + str(end2-start2) + ", " + str(sollenm) + "\n")
+
+    
+
+    print("w/o mutate: " + str(end1-start1) + " ms\t" + str(sollen) + " moves")
+    print("w/ mutate: " + str(end2-start2) + " ms\t" + str(sollenm) + " moves")
 
 class Visual():
     BLACK = 0,0,0
@@ -673,4 +739,13 @@ def visualize(puzzle):
     
     
 if __name__ == "__main__":
-    levelstuff()
+    test()
+    """
+    pygame.init()
+    with open("mutatedistcomp2.csv", 'a+') as f:
+        f.write("dist, moves, time\n")
+        for i in range(10, 100, 10):
+            for j in range(3):
+                compareDifficulty(i, f)
+            print("\n")
+"""
