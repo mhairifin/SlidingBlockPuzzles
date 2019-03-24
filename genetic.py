@@ -5,20 +5,27 @@ import statistics as stats
 from enum import Enum
 import sys, pygame
 from pygame import time
+import numpy as np
 
 debug = True
 messages = True
 
 def test():
-    i = [[1,1, 0], [0,0,2], [0,0,0]]
-    f = [[0,1,1],[0,0,0], [0,0,0]]
+    i = [[0,0,0,1,1,1],
+         [0,0,0,0,0,0],
+         [2,2,0,0,3,0],
+         [0,0,4,0,3,0],
+         [0,0,4,0,3,0],
+         [0,0,0,5,5,0]]
+    f = [[0,0,0,0,0,0],
+         [0,0,0,0,0,0],
+         [0,0,0,0,2,2],
+         [0,0,0,0,0,0],
+         [0,0,0,0,0,0],
+         [0,0,0,0,0,0]]
     puzzle = SBP(i, f)
-    for id in puzzle.gb:
-        piece = puzzle.gb[id]
-        print(piece.id)
-        print(piece.posits)
-        print(piece.dir)
     #SBP.getvalidmove(puzzle.board).prin()
+
     puzzle.solve(mutate=True)
     sollen = puzzle.sol.solpos+1
     if puzzle.sol == None:
@@ -27,7 +34,8 @@ def test():
         print("score " + str(puzzle.sol.score) + " and solution length " + str(puzzle.sol.solpos+1))
         if messages:
             puzzle.sol.show()
-
+    visualize(puzzle)
+    
 def main():
     initsbp = [[1, 2, 3, 4],[6, 9, 0, 8],[5, 10, 7, 11], [12, 13, 14, 15]]
     finsbp = [[1,2,3,4],[5,6,7,8],[9,0,10,11], [12, 13, 14, 15]]
@@ -251,7 +259,7 @@ class SBP():
         zr,zc = move.empty
         if board.matrix[zr][zc] != SBP.EMPTY:
             return False
-        mr,mc = SBP.add(move.empty, SBP.times(Compass.opp(move.dir), move.piece.length()))
+        mr,mc = SBP.add(move.empty, Compass.opp(move.dir))
         if board.matrix[mr][mc] != move.piece.id:
             return False
         return True
@@ -310,7 +318,7 @@ class SBP():
                         score=totd
 
                 else:
-                    move = SBP.getvalidmove(ibalter)
+                    move = SBP.getvalidmove(ibalter)        
                     adjd, ibalter, newempty = self.applymove(move, ibalter)
                     tot = self.manhattan(ibalter)
                     child.append(move)
@@ -572,7 +580,7 @@ def printboard(ib):
         print()
     print()
 
-def levelstuff():
+def tilelevelstuff():
     length = 4
     dist = 15
     level1 = Level(length, length*length-1, dist)
@@ -663,7 +671,8 @@ class Visual():
         ims = {}
         myfont = pygame.font.SysFont('Arial', 30)
         for id in pieces:
-            ims[id] = myfont.render(str(id), False, Visual.BLACK)
+            color = np.random.choice(range(256), size=3)
+            ims[id] = myfont.render(str(id), False, color)
         return ims
 
     def drawGoal(self):
@@ -675,7 +684,8 @@ class Visual():
             for j in range(self.length):
                 id = self.puzzle.goal[i][j]
                 pygame.draw.rect(self.screen, Visual.BLACK, [x, y, w, h], 2)
-                self.screen.blit(self.pieceIms[id], (x+4,y+4))
+                if id != 0:
+                    self.screen.blit(self.pieceIms[id], (x+4,y+4))
                 x += w
             y += h
 
@@ -696,7 +706,8 @@ class Visual():
             x = 50
             for j in range(self.length):
                 id = self.board.matrix[i][j]
-                self.screen.blit(self.pieceIms[id], (x+4,y+4))
+                if id != 0:
+                    self.screen.blit(self.pieceIms[id], (x+4,y+4))
                 x += w
             y += h
 
@@ -739,7 +750,8 @@ def visualize(puzzle):
     
     
 if __name__ == "__main__":
-    test()
+    #test()
+    tilelevelstuff()
     """
     pygame.init()
     with open("mutatedistcomp2.csv", 'a+') as f:
