@@ -145,11 +145,12 @@ class SBP():
         self.goal = goal
         self.gb = SBP.getgoal(goal)
                 
-    def solve(self, mutate=False):
+    def solve(self, mutate=False, chance=0.05):
         self.mutate = mutate
         self.found = False
         self.pop = self.getpop(self.board, self.length, self.popsize)
         self.sel = self.select()
+        self.chance = chance
         if debug:
             print("END INITIAL POPULATION")
         avg = []
@@ -273,7 +274,7 @@ class SBP():
         
         for i in range(len(mum.seq)):
             rand = random.random()
-            if rand >= 0.05 or not self.mutate: #5% chance of mutation, or not a mutate round
+            if rand >= self.chance or not self.mutate: #5% chance of mutation, or not a mutate round
                 ibmum = ibalter.copy()
                 ibdad = ibalter.copy()
 
