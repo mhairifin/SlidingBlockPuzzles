@@ -7,8 +7,8 @@ import sys, pygame
 from pygame import time
 import numpy as np
 
-debug = True
-messages = True
+debug = False
+messages = False
 
 def test():
     i = [[0,0,0,1,1,1],
