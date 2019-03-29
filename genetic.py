@@ -177,7 +177,9 @@ class SBP():
             elif el.score == self.sol.score and el.solpos<self.sol.solpos:
                 self.sol = el
             c += 1
-        
+
+        self.solved = self.sol.solpos+1 != 0
+
     def piecesFromMatrix(problem):
         pieces = {}
         for r in range(len(problem)):
@@ -580,6 +582,15 @@ def printboard(ib):
             print(str(ib[i][j]) + "\t", end="")
         print()
     print()
+
+def writeboard(ib):
+    string = ""
+    for i in range(len(ib)):
+        for j in range(len(ib[i])):
+            string += str(ib[i][j]) + "\t"
+        string += "\n"
+    string += "\n\n"
+    return string
 
 def tilelevelstuff():
     length = 4
