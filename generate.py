@@ -142,11 +142,14 @@ class GeneticLevel():
         return board
 
 if __name__ == "__main__":
-    with open("boards", "w+") as f:
+    with open("boards2", "w+") as f:
         for i in range(50):
             generateAvailable()
             genSlots()
             level = GeneticLevel(available)
+            puzzle = gen.SBP(level.end, final)
+            puzzle.solve(mutate=True)
+            f.write(str(puzzle.solved) + "\n" + str(puzzle.sol.solpos+1) + "\n")
             f.write(gen.writeboard(level.end))
             
     
