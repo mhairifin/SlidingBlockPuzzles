@@ -7,7 +7,7 @@ import sys, pygame
 from pygame import time
 import numpy as np
 
-debug = False
+debug = True
 messages = False
 
 def test():
@@ -117,7 +117,7 @@ class Board():
     def __init__(self, problem, pieces=None):
         self.matrix = problem
         if pieces == None:
-            pieces = SBP.piecesFromMatrix(problem)
+            self.pieces = SBP.piecesFromMatrix(problem)
         else:
             self.pieces = copy.deepcopy(pieces)
 
@@ -228,7 +228,7 @@ class SBP():
             return True
         else:
             self.inc += 1
-            return self.inc <= 5
+            return self.inc <= 8
                
     def extend(self):
         for i in range(len(self.pop)):
@@ -476,7 +476,8 @@ class SBP():
         r,c = t
         r*=n
         c*=n
-        return (r,c)
+        return (r,c)            
+        
 
 class Level():
     EMPTY = 0
