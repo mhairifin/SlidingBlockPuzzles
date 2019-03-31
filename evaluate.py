@@ -76,8 +76,7 @@ if __name__ == "__main__":
             if score > max:
                 max = score
                 top = board
-            f.write(score)
-            f.write("\n")
+            f.write(str(score)+"\n")
             f.write(gen.writeboard(board))
 
     print(top)
