@@ -108,7 +108,13 @@ class Maximize():
 
         level = gen.SBP(board, board)
         level.generate()
-        return board
+
+        permute = level.sol.seq[:level.sol.solpos+1]
+        final = []
+        for move in permute:
+            move, b, empty = gen.SBP.domove(move, gen.Board(board))
+            final = b.matrix
+        return final
         
 
 class GeneticLevel():
@@ -240,21 +246,16 @@ class GeneticLevel():
         return board
 
 if __name__ == "__main__":
-    with open("boards3", "w+") as f:
+    with open("1000boardsGenetic", "w+") as f:
         for i in range(1000):
             generateAvailable()
             genSlots()
-            level = GeneticLevel(available)
+            level = Maximize(available)
+            gen.printboard(level.end)
             puzzle = gen.SBP(level.end, final)
             puzzle.solve(mutate=True)
             f.write(str(puzzle.solved) + "\n" + str(puzzle.sol.solpos+1) + "\n")
             f.write(gen.writeboard(level.end))
-    """
-    generateAvailable()
-    genSlots()
-    level = Maximize(available)
-    gen.printboard(level.end)
-    """
     
         
         
