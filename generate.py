@@ -21,7 +21,7 @@ final = [[0,0,0,0,0,0],
          [0,0,0,0,0,0]]
 
 def generateAvailable():
-    for i in range(1, 13):
+    for i in range(2, 13):
         available.append((i, 2))
     for j in range(13, 17):
         available.append((j, 3))
@@ -97,6 +97,8 @@ class GeneticLevel():
             p = random.randrange(len(available))
             id, s = available[p]
 
+            del available[p]
+
             r = 0
             potslot = 0
             if s == 2 and len(twoslots)>0:
@@ -119,6 +121,7 @@ class GeneticLevel():
                     puzzle.solve(mutate=True)
 
                     if not puzzle.solved:
+                        available.append((id, s))
                         repeat += 1
                         if repeat >= 5:
                             board[x1][y1] = 0
@@ -129,7 +132,11 @@ class GeneticLevel():
                             board[x2][y2] = 0
                             del twoslots[r]
                             continue
+                    else:
+                        gen.printboard(board)
+                        del twoslots[r]
                 except:
+                    gen.printboard(board)
                     print(twoslots)
                     print("SOMETHING WENT WRONG IN TWOSLOT")
 
@@ -152,6 +159,7 @@ class GeneticLevel():
                     puzzle.solve(mutate=True)
 
                     if not puzzle.solved:
+                        available.append((id, s))
                         repeat += 1
                         if repeat >= 5:
                             board[x1][y1] = 0
@@ -164,7 +172,12 @@ class GeneticLevel():
                             board[x3][y3] = 0
                             del threeslots[r]
                             continue
+                    else:
+                        del threeslots[r]
+                        
                 except:
+                    gen.printboard(board)
+                    print(threeslots)
                     print("SOMETHING WENT WRONG IN THREESLOT")
             else:
                 break
@@ -172,7 +185,7 @@ class GeneticLevel():
 
 if __name__ == "__main__":
     with open("boards3", "w+") as f:
-        for i in range(100):
+        for i in range(3):
             generateAvailable()
             genSlots()
             level = GeneticLevel(available)
