@@ -240,9 +240,8 @@ class GeneticLevel():
         return board
 
 if __name__ == "__main__":
-    """
     with open("boards3", "w+") as f:
-        for i in range(100):
+        for i in range(1000):
             generateAvailable()
             genSlots()
             level = GeneticLevel(available)
@@ -255,6 +254,7 @@ if __name__ == "__main__":
     genSlots()
     level = Maximize(available)
     gen.printboard(level.end)
+    """
     
         
         
