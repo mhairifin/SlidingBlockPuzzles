@@ -353,7 +353,9 @@ class SBP():
         possmoves = []
         for z in zeros:
             possmoves += SBP.getMoves(z, board)
-        num = random.randint(0,len(possmoves)-1)
+        num = 0
+        if len(possmoves)>1:
+            num = random.randint(0,len(possmoves)-1)
         try:
             return possmoves[num]
         except:

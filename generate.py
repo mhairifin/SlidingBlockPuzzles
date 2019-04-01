@@ -7,6 +7,7 @@ size = 6
 available = []
 
 twoslots = []
+threeslots = []
 
 totpieces = 16
 
@@ -28,6 +29,10 @@ def generateAvailable():
 def genSlots():
     for i in range(0, size*(size-1)*2):
         twoslots.append(i)
+    for i in range(0, size):
+        for j in range(0, size-2):
+            threeslots.append(((i,j),(i, j+1),(i, j+2)))
+            threeslots.append(((j, i), (j+1, i), (j+2, i)))
 
 def convertPosToSlot(pos1,pos2):
     x1, y1 = pos1
@@ -76,69 +81,93 @@ class GeneticLevel():
         board[2][x1] = 1
         board[2][x2] = 1
 
+        print(convertPosToSlot((2,x1), (2,x2)))
+        print(twoslots)
+
         del twoslots[convertPosToSlot((2,x1), (2,x2))]
 
         # put on piece, generate level, check if solvable, repeat
 
-        while(len(twoslots)>0):
+        while(len(available)>0):
         
             count+=1
 
-            print("ADDING PIECE: " + str(count))
+            print("ROUND: " + str(count))
 
-            r = random.randint(0,len(twoslots)-1)
-        
-            potSlot = twoslots[r]
+            p = random.randrange(len(available))
+            id, s = available[p]
 
-            pos1, pos2 = convertSlotToPos(potSlot)
+            r = 0
+            potslot = 0
+            if s == 2 and len(twoslots)>0:
+                r = random.randrange(len(twoslots))
+                potSlot = twoslots[r]
 
-            x1, y1 = pos1
-            x2, y2 = pos2
+                pos1, pos2 = convertSlotToPos(potSlot)
 
-                    
-            try:
+                x1, y1 = pos1
+                x2, y2 = pos2
 
-                if board[x1][y1] != 0 or board[x2][y2] != 0:
-                    #print("ADD FAILED")
-                    count -= 1
-                    del twoslots[r]
-                    continue
-            
-
-                if potSlot < 30:
-                    hor += 1
-                else:
-                    ver += 1
-                board[x1][y1] = count
-                board[x2][y2] = count
-
-                puzzle = gen.SBP(board, final)
-                puzzle.solve(mutate=True)
-
-                if not puzzle.solved:
-                    repeat += 1
-                    if repeat >= 5:
-                        board[x1][y1] = 0
-                        board[x2][y2] = 0
-                        return board
-                    else:
-                        board[x1][y1] = 0
-                        board[x2][y2] = 0
-                        print("H: " + str(hor))
-                        print("V: " + str(ver))
+                try:
+                    if board[x1][y1] != 0 or board[x2][y2] != 0:
                         del twoslots[r]
-                        print(repeat)
                         continue
-                else:
-                    repeat = 0
-                    gen.printboard(board)
-                    del twoslots[r]
-            except:
-                print(twoslots)
-                print(potSlot)
-                print("x: " + str(x1) + " y: " + str(y1))
-                print("x: " + str(x2) + " y: " + str(y2))
-                return board
+                    board[x1][y1] = id
+                    board[x2][y2] = id
+
+                    puzzle = gen.SBP(board, final)
+                    puzzle.solve(mutate=True)
+
+                    if not puzzle.solved:
+                        repeat += 1
+                        if repeat >= 5:
+                            board[x1][y1] = 0
+                            board[x2][y2] = 0
+                            return board
+                        else:
+                            board[x1][y1] = 0
+                            board[x2][y2] = 0
+                            del twoslots[r]
+                            continue
+                except:
+                    print(twoslots)
+                    print("SOMETHING WENT WRONG IN TWOSLOT")
+
+            
+            elif s == 3 and len(threeslots)>0:
+                r = random.randrange(len(threeslots))
+                pos1, pos2, pos3 = threeslots[r]
+                x1, y1 = pos1
+                x2, y2 = pos2
+                x3, y3 = pos3
+                try:
+                    if board[x1][y1] != 0 or board[x2][y2] != 0 or board[x3][y3] != 0:
+                        del threeslots[r]
+                        continue
+                    board[x1][y1] = id
+                    board[x2][y2] = id
+                    board[x3][y3] = id
+
+                    puzzle = gen.SBP(board, final)
+                    puzzle.solve(mutate=True)
+
+                    if not puzzle.solved:
+                        repeat += 1
+                        if repeat >= 5:
+                            board[x1][y1] = 0
+                            board[x2][y2] = 0
+                            board[x3][y3] = 0
+                            return board
+                        else:
+                            board[x1][y1] = 0
+                            board[x2][y2] = 0
+                            board[x3][y3] = 0
+                            del threeslots[r]
+                            continue
+                except:
+                    print("SOMETHING WENT WRONG IN THREESLOT")
+            else:
+                break
         return board
 
 if __name__ == "__main__":
@@ -150,8 +179,7 @@ if __name__ == "__main__":
             puzzle = gen.SBP(level.end, final)
             puzzle.solve(mutate=True)
             f.write(str(puzzle.solved) + "\n" + str(puzzle.sol.solpos+1) + "\n")
-            f.write(gen.writeboard(level.end))
-            
+            f.write(gen.writeboard(level.end))        
     
         
         
