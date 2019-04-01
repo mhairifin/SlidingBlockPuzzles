@@ -53,6 +53,62 @@ def convertSlotToPos(num):
         row = int(num/(size-1))
         col1 = num%(size-1)
         return((row, col1), (row, col1+1))
+
+class Maximize():
+    def __init__(self, available):
+        self.available = available
+        self.end = self.constructBoard()
+
+    def constructBoard(self):
+        board = []
+        for i in range(size):
+            row = []
+            for j in range(size):
+                row.append(0)
+            board.append(row)
+
+        # solveable board
+        board[2][4] = 1
+        board[2][5] = 1
+
+        while len(available)>0:
+            p = random.randrange(len(available))
+            id, s = available[p]
+
+            del available[p]
+
+            if s==2 and len(twoslots)>0:
+                r = random.randrange(len(twoslots))
+                potSlot = twoslots[r]
+
+                pos1, pos2 = convertSlotToPos(potSlot)
+
+                x1, y1 = pos1
+                x2, y2 = pos2
+                
+                if board[x1][y1] != 0 or board[x2][y2] != 0:
+                    del twoslots[r]
+                    continue
+                board[x1][y1] = id
+                board[x2][y2] = id
+            elif s==3 and len(threeslots)>0:
+                r = random.randrange(len(threeslots))
+                pos1, pos2, pos3 = threeslots[r]
+                x1, y1 = pos1
+                x2, y2 = pos2
+                x3, y3 = pos3
+                if board[x1][y1] != 0 or board[x2][y2] != 0 or board[x3][y3] != 0:
+                    del threeslots[r]
+                    continue
+                board[x1][y1] = id
+                board[x2][y2] = id
+                board[x3][y3] = id
+            else:
+                break
+
+        level = gen.SBP(board, board)
+        level.generate()
+        return board
         
 
 class GeneticLevel():
@@ -184,6 +240,7 @@ class GeneticLevel():
         return board
 
 if __name__ == "__main__":
+    """
     with open("boards3", "w+") as f:
         for i in range(3):
             generateAvailable()
@@ -192,7 +249,12 @@ if __name__ == "__main__":
             puzzle = gen.SBP(level.end, final)
             puzzle.solve(mutate=True)
             f.write(str(puzzle.solved) + "\n" + str(puzzle.sol.solpos+1) + "\n")
-            f.write(gen.writeboard(level.end))        
+            f.write(gen.writeboard(level.end))
+    """
+    generateAvailable()
+    genSlots()
+    level = Maximize(available)
+    gen.printboard(level.end)
     
         
         

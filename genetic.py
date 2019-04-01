@@ -144,12 +144,16 @@ class SBP():
         self.board = Board(problem, SBP.getPieces(problem))
         self.goal = goal
         self.gb = SBP.getgoal(goal)
+
+    def generate(self, mutate=True, chance = 0.05):
+        self.max = True
+        self.solve(mutate=mutate, chance=chance, maximize = True)
                 
-    def solve(self, mutate=False, chance=0.05):
+    def solve(self, mutate=False, chance=0.05, maximize = False):
         self.mutate = mutate
         self.found = False
         self.pop = self.getpop(self.board, self.length, self.popsize)
-        self.sel = self.select()
+        self.sel = self.select(max = maximize)
         self.chance = chance
         if debug:
             print("END INITIAL POPULATION")
@@ -161,7 +165,7 @@ class SBP():
         while self.keepgoing():
             self.pop = self.crossover(self.sel)
             self.lastsel = self.sel
-            self.sel = self.select()
+            self.sel = self.select(max=maximize)
             self.lastavg = self.curravg
             self.curravg = getavg(self.sel)
             if debug:
@@ -201,7 +205,7 @@ class SBP():
 
     def keepgoing(self):
         if not self.found:
-            if self.lastavg != None and self. curravg != None and self.lastavg < self.curravg:
+            if self.lastavg != None and self. curravg != None and self.favours(self.lastavg,self.curravg):
                 print("AVERAGE INCREASED")
                 """
                 for item in self.sel:
@@ -229,6 +233,12 @@ class SBP():
         else:
             self.inc += 1
             return self.inc <= 8
+
+    def favours(self, num1, num2):
+        if self.max == True:
+            return num1>num2
+        else:
+            return num1<num2
                
     def extend(self):
         for i in range(len(self.pop)):
@@ -242,12 +252,17 @@ class SBP():
             pop.append(self.getsequence(l, ib, zeros=zerolist, ongoingscore=score))
         return pop
         
-    def select(self):
+    def select(self, max = False):
+        if max:
+            return heapq.nlargest(int(len(self.pop)/10), self.pop, key=SBP.genscore)
         best = heapq.nsmallest(int(len(self.pop)/10), self.pop, key=SBP.getscore)
         return best
         
     def getscore(seq):
         return int(seq.score*100+seq.solpos) #temporary solution -- fix later
+
+    def genscore(seq):
+        return int(seq.score)
     
     def crossover(self, select):
         crosses = []
@@ -293,7 +308,7 @@ class SBP():
 
                     chance = random.random()
 
-                    if (totm < totd and chance<0.8) or (totm>=totd and chance >= 0.8):
+                    if (self.favours(totm,totd) and chance<0.8) or (not self.favours(totm,totd) and chance >= 0.8):
                         child.append(mum.seq[i])
                         ibalter = ibmum
                         if totm<score:
