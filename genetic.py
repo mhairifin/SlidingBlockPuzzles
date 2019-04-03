@@ -144,6 +144,7 @@ class SBP():
         self.board = Board(problem, SBP.getPieces(problem))
         self.goal = goal
         self.gb = SBP.getgoal(goal)
+        self.max = False
 
     def generate(self, mutate=True, chance = 0.05):
         self.max = True
