@@ -144,8 +144,9 @@ class SBP():
         self.board = Board(problem, SBP.getPieces(problem))
         self.goal = goal
         self.gb = SBP.getgoal(goal)
+        self.max=False
 
-    def generate(self, mutate=True, chance = 0.05):
+    def generate(self, mutate=True, chance = 0.08):
         self.max = True
         self.solve(mutate=mutate, chance=chance, maximize = True)
                 
@@ -231,13 +232,12 @@ class SBP():
             elif self.inc%5 == 0:
                 self.extend()
                 return True
-            elif self.inc == 21:
+            elif self.inc == 30:
                 print("Halting without solution")
                 return False
             return True
         else:
             self.inc += 1
-            print("STOP2")
             return self.inc <= 8
 
     def favours(self, num1, num2):
