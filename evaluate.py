@@ -1,5 +1,6 @@
 import genetic as gen
 import copy
+import sys
 
 final = [[0,0,0,0,0,0],
          [0,0,0,0,0,0],
@@ -71,10 +72,11 @@ def readin(filename):
     return boards
 
 if __name__ == "__main__":
-    boards = readin("100boardsGenetic")
+    name = sys.argv[1]
+    boards = readin(name)
     max = 0
     top = []
-    with open("100bGscores_percent", "w+") as f:
+    with open(name+"_scores", "w+") as f:
         for board in boards:
             puzzle = gen.SBP(board, final)
             puzzle.solve(mutate=True)
