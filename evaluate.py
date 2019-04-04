@@ -71,11 +71,13 @@ def readin(filename):
     return boards
 
 if __name__ == "__main__":
-    boards = readin("100boardsGenetic")
+    name = "originalBoards"
+    boards = readin(name)
     max = 0
     top = []
-    with open("100bGscores_percent", "w+") as f:
+    with open(name+"_scores", "w+") as f:
         for board in boards:
+            print("Next Board")
             puzzle = gen.SBP(board, final)
             puzzle.solve(mutate=True)
             score = evaluate(puzzle.sol, board)
@@ -86,12 +88,5 @@ if __name__ == "__main__":
             f.write(gen.writeboard(board))
 
     print(top)
-    print(max)
-    
-    
-                
-
-
-
-    
+    print(max)    
 

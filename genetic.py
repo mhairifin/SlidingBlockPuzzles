@@ -7,7 +7,7 @@ import sys, pygame
 from pygame import time
 import numpy as np
 
-debug = True
+debug = False
 messages = False
 
 def test():
@@ -163,7 +163,9 @@ class SBP():
         self.lastavg = None
         self.curravg = None
         self.inc = 0
-        while self.keepgoing():
+
+        self.gen = 0
+        while self.keepgoing() and self.gen<100:
             self.pop = self.crossover(self.sel)
             self.lastsel = self.sel
             self.sel = self.select(max=maximize)
@@ -177,6 +179,7 @@ class SBP():
             if self.max and self.inc == 3:
                 self.found = True
                 break;
+            self.gen+=1
         comp = float("inf")
         if self.max:
             comp = 0
