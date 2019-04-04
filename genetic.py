@@ -146,7 +146,7 @@ class SBP():
         self.gb = SBP.getgoal(goal)
         self.max = False
 
-    def generate(self, mutate=True, chance = 0.05):
+    def generate(self, mutate=True, chance = 0.08):
         self.max = True
         self.solve(mutate=mutate, chance=chance, maximize = True)
                 
@@ -174,16 +174,22 @@ class SBP():
                 print("WITH POP AVERAGE: " + str(getavg(self.pop)))
                 print("WITH ELITE AVERAGE: " + str(self.curravg))
             i+=1
-        self.sol = Sequence("bad", float("inf"), "bad", "bad")
+            if self.max and self.inc == 3:
+                self.found = True
+                break;
+        comp = float("inf")
+        if self.max:
+            comp = 0
+        self.sol = Sequence("bad", comp, "bad", "bad")
         c = 0
         for el in self.sel:
-            if el.score < self.sol.score:
+            if self.favours(el.score,self.sol.score):
                 self.sol = el
-            elif el.score == self.sol.score and el.solpos<self.sol.solpos:
+            elif el.score == self.sol.score and self.favours(el.solpos,self.sol.solpos):
                 self.sol = el
             c += 1
 
-        self.solved = self.sol.solpos+1 != 0
+        self.solved = (self.sol.solpos + 1) != 0
 
     def piecesFromMatrix(problem):
         pieces = {}
@@ -206,8 +212,7 @@ class SBP():
 
     def keepgoing(self):
         if not self.found:
-            if self.lastavg != None and self. curravg != None and self.favours(self.lastavg,self.curravg):
-                print("AVERAGE INCREASED")
+            if self.lastavg != None and self.curravg != None and self.favours(self.lastavg,self.curravg):
                 """
                 for item in self.sel:
                     seeseqs(self.sel)
@@ -227,7 +232,7 @@ class SBP():
             elif self.inc%5 == 0:
                 self.extend()
                 return True
-            elif self.inc == 21:
+            elif self.inc == 30:
                 print("Halting without solution")
                 return False
             return True
@@ -236,7 +241,7 @@ class SBP():
             return self.inc <= 8
 
     def favours(self, num1, num2):
-        if self.max == True:
+        if self.max:
             return num1>num2
         else:
             return num1<num2
@@ -288,6 +293,8 @@ class SBP():
         ibalter = self.board.copy()
         zeros = self.zero
         score = float("inf")
+        if self.max:
+            score = 0
         solpos = -1
         
         for i in range(len(mum.seq)):
@@ -312,12 +319,16 @@ class SBP():
                     if (self.favours(totm,totd) and chance<0.8) or (not self.favours(totm,totd) and chance >= 0.8):
                         child.append(mum.seq[i])
                         ibalter = ibmum
-                        if totm<score:
+                        if self.favours(totm,score):
+                            if self.max:
+                                solpos = i
                             score=totm
                     else:
                         child.append(dad.seq[i])
                         ibalter = ibdad
-                        if totd<score:
+                        if self.favours(totd,score):
+                            if self.max:
+                                solpos = i
                             score=totd
 
                 elif mumlegal:
@@ -325,7 +336,9 @@ class SBP():
                     totm = self.manhattan(ibmum)
                     child.append(mum.seq[i])
                     ibalter = ibmum
-                    if totm<score:
+                    if self.favours(totm,score):
+                        if self.max:
+                            solpos = i
                         score=totm
 
                 elif dadlegal:
@@ -333,7 +346,9 @@ class SBP():
                     totd = self.manhattan(ibdad)
                     child.append(dad.seq[i])
                     ibalter = ibdad
-                    if totd<score:
+                    if self.favours(totd,score):
+                        if self.max:
+                            solpos = i
                         score=totd
 
                 else:
@@ -341,14 +356,18 @@ class SBP():
                     adjd, ibalter, newempty = self.applymove(move, ibalter)
                     tot = self.manhattan(ibalter)
                     child.append(move)
-                    if tot<score:
+                    if self.favours(tot,score):
+                        if self.max:
+                            solpos = i
                         score=tot
             else:
                 move = SBP.getvalidmove(ibalter)
                 adjd, ibalter, newempty = self.applymove(move, ibalter)
                 tot = self.manhattan(ibalter)
                 child.append(move)
-                if tot<score:
+                if self.favours(tot,score):
+                    if self.max:
+                        solpos = i
                     score=tot    
                     
             if score == 0 and solpos == -1:
@@ -428,6 +447,8 @@ class SBP():
         ibalter = board.copy()
         seq = []
         score = float("inf") #arbitrarily high number
+        if self.max:
+            score = 0
         if ongoingscore == None:
             ongoingscore = self.manhattan(board) 
         solpos = -1;
@@ -437,7 +458,7 @@ class SBP():
             #zeros = SBP.replace(zeros, move.empty, newempty)
             #zeros = SBP.findzeros(ibalter.matrix)
             ongoingscore = adjscore
-            if ongoingscore<score:
+            if self.favours(ongoingscore,score):
                 score = ongoingscore
             seq.append(move)
             if ongoingscore == 0 and solpos == -1:

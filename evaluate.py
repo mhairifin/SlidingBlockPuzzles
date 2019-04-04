@@ -25,7 +25,10 @@ def dependents(seq, board):
             move, board, empty = gen.SBP.domove(move, board)
         else:
             count += 1
-    return count
+    if len(seq) != 0:
+        return count/len(seq)*10
+    else:
+        return 10
 
 # counts how many different pieces are used in a solution
 # this is the variety of the moves
@@ -34,7 +37,10 @@ def variety(seq):
     for move in seq:
         if move.piece.id not in pieces:
             pieces.add(move.piece.id)
-    return len(pieces)
+    if len(seq) != 0:
+        return len(pieces)/len(seq)*10
+    else:
+        return 10
 
 # need to define some ideal weighting
 # possibly based on ranking of existing rush hour puzzles
