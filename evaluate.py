@@ -1,5 +1,6 @@
 import genetic as gen
 import copy
+import sys
 
 final = [[0,0,0,0,0,0],
          [0,0,0,0,0,0],
@@ -71,7 +72,7 @@ def readin(filename):
     return boards
 
 if __name__ == "__main__":
-    name = "originalBoards"
+    name = sys.argv[1]
     boards = readin(name)
     max = 0
     top = []
