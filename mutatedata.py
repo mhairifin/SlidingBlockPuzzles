@@ -7,12 +7,11 @@ if __name__ == "__main__":
     dist = 25
     pygame.init()
 
-    with open("mutatedata4.csv", "w+") as f:
+    with open("mutatedatamore.csv", "w+") as f:
         f.write("Mutation chance(%), Time, Solution Length, Solution Found?\n")
         for i in range(0, 20):
             level = gen.Level(length, length*length-1, dist)
-            for j in range(0, 50):
-                print(j)
+            for j in range(4, 20):
                 puzzle = gen.SBP(level.start.matrix, level.end.matrix)
                 start1 = time.get_ticks()
                 puzzle.solve(mutate=True, chance = 0.01*j)

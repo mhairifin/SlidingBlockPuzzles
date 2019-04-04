@@ -78,6 +78,7 @@ if __name__ == "__main__":
     top = []
     with open(name+"_scores", "w+") as f:
         for board in boards:
+            print("Next Board")
             puzzle = gen.SBP(board, final)
             puzzle.solve(mutate=True)
             score = evaluate(puzzle.sol, board)
@@ -88,12 +89,5 @@ if __name__ == "__main__":
             f.write(gen.writeboard(board))
 
     print(top)
-    print(max)
-    
-    
-                
-
-
-
-    
+    print(max)    
 
