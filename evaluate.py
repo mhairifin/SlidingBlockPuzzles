@@ -1,5 +1,6 @@
 import genetic as gen
 import copy
+import sys
 
 final = [[0,0,0,0,0,0],
          [0,0,0,0,0,0],
@@ -52,7 +53,7 @@ def evaluate(sequence, board):
     length = len(solution)
     print(length)
 
-    return deps+var+.3*length
+    return (deps, var, length)
 
 def readin(filename):
     boards = []
@@ -71,21 +72,26 @@ def readin(filename):
     return boards
 
 if __name__ == "__main__":
-    name = "originalBoards"
+    name = sys.argv[1]
     boards = readin(name)
     max = 0
     top = []
-    with open(name+"_scores", "w+") as f:
+    with open(name+"_bands", "w+") as f, open(name+"_justscores", "w+") as scores:
+        i = 1
         for board in boards:
-            print("Next Board")
+            print("Board "+ str(i))
             puzzle = gen.SBP(board, final)
             puzzle.solve(mutate=True)
-            score = evaluate(puzzle.sol, board)
+            deps, var, length = evaluate(puzzle.sol, board)
+            score = deps+var+.3*length
             if score > max:
                 max = score
                 top = board
+            f.write(str(deps)+", "+str(var)+", "+str(length)+"\n")
+            scores.write(str(i)+", " +str(deps)+", "+str(var)+", "+str(length)+"\n")
             f.write(str(score)+"\n")
             f.write(gen.writeboard(board))
+            i += 1
 
     print(top)
     print(max)    
