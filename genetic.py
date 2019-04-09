@@ -146,11 +146,11 @@ class SBP():
         self.gb = SBP.getgoal(goal)
         self.max = False
 
-    def generate(self, mutate=True, chance = 0.08):
+    def generate(self, mutate=True, chance = 0.12):
         self.max = True
         self.solve(mutate=mutate, chance=chance, maximize = True)
                 
-    def solve(self, mutate=False, chance=0.05, maximize = False):
+    def solve(self, mutate=False, chance=0.12, maximize = False):
         self.mutate = mutate
         self.found = False
         self.pop = self.getpop(self.board, self.length, self.popsize)
@@ -521,6 +521,7 @@ class SBP():
         return (r,c)            
         
 
+# Generates 15 puzzle level
 class Level():
     EMPTY = 0
     def __init__(self, size, numPieces, dist):
@@ -722,6 +723,21 @@ class Visual():
         self.pieceIms = Visual.generateIms(puzzle.board.pieces)
         self.col = Visual.BLACK
 
+    def button(self, msg, x, y, w, h, colour, colourhover, action):
+        mouse = pygame.mouse.get_pos()
+        click = pygame.mouse.get_pressed()
+        if x+w > mouse[0] > x and y+h > mouse[1] > y:
+            pygame.draw.rect(self.screen, colourhover,(x,y,w,h))
+            if click[0]:
+                action()
+        else:
+            pygame.draw.rect(self.screen, colour,(x,y,w,h))
+        f = pygame.font.Font("freesansbold.ttf",20)
+        textSurface = f.render(msg, True, Visual.BLACK)
+        textRect = textSurface.get_rect()
+        textRect.center = ( (x+(w/2)), (y+(h/2)) )
+        self.screen.blit(textSurface, textRect)
+
     def generateIms(pieces):
         ims = {}
         myfont = pygame.font.SysFont('Arial', 30)
@@ -768,6 +784,8 @@ class Visual():
 
     def drawState(self):
         self.screen.fill(Visual.WHITE)
+        self.button("Solve Puzzle", 600, 100, 30, 20, pygame.Color('0x929591'), pygame.Color('0xd8dcd6'), works)
+        self.button("Get puzzle", 600, 130, 30, 20, pygame.Color('0x929591'), pygame.Color('0xd8dcd6'), works)
         self.drawBoard()
         self.drawPieces()
         self.drawGoal()
@@ -775,6 +793,9 @@ class Visual():
 
     def changeColor(self, color):
         self.col = color
+
+def works():
+    print("worked")
 
 def visualize(puzzle):
     vis = Visual(puzzle)
@@ -802,11 +823,21 @@ def visualize(puzzle):
                 done = True
         i+=1
     pygame.quit()
+
+def basicVisualise(puzzle):
+    vis = Visual(puzzle)
+    stop = False
+    while not stop:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                stop = True
+        vis.drawState()
+    pygame.quit()
     
     
 if __name__ == "__main__":
     #test()
-    tilelevelstuff()
+    #tilelevelstuff()
     """
     pygame.init()
     with open("mutatedistcomp2.csv", 'a+') as f:
