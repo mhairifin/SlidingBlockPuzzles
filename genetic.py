@@ -138,7 +138,7 @@ class SBP():
     
     def __init__(self, problem, goal):
         self.length = 7
-        self.popsize = 100
+        self.popsize = 49
         self.sol = None
         self.zero = SBP.findzeros(problem)
         self.board = Board(problem, SBP.getPieces(problem))
@@ -263,9 +263,12 @@ class SBP():
         
     def select(self, max = False):
         if max:
-            return heapq.nlargest(int(len(self.pop)/10), self.pop, key=SBP.genscore)
-        best = heapq.nsmallest(int(len(self.pop)/10), self.pop, key=SBP.getscore)
+            return heapq.nlargest(int(self.selectSize()), self.pop, key=SBP.genscore)
+        best = heapq.nsmallest(int(self.selectSize()), self.pop, key=SBP.getscore)
         return best
+
+    def selectSize(self):
+        return math.sqrt(self.popsize)
         
     def getscore(seq):
         return int(seq.score*100+seq.solpos) #temporary solution -- fix later
