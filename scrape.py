@@ -10,7 +10,7 @@ def simple_get(url):
 
 if __name__ == "__main__":
     boards = []
-    for i in range(1, 40):
+    for i in range(1, 41):
         board = []
         for c in range(6):
             row = []
@@ -42,7 +42,7 @@ if __name__ == "__main__":
                 board[int(r)+2][int(c)] = id
             else:
                 board[int(r)][int(c)+1] = id
-                board[int(r)][int(c)+1] = id
+                board[int(r)][int(c)+2] = id
             count+=1
             
         gen.printboard(board)

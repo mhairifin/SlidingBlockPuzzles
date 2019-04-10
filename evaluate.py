@@ -46,12 +46,10 @@ def variety(seq):
 # possibly based on ranking of existing rush hour puzzles
 def evaluate(sequence, board):
     solution = confine(sequence)
-    deps = dependents(solution, gen.Board(board))
-    print(deps)
+    #deps = dependents(solution, gen.Board(board))
+    deps = 0
     var = variety(solution)
-    print(var)
     length = len(solution)
-    print(length)
 
     return (deps, var, length)
 
@@ -74,25 +72,37 @@ def readin(filename):
 if __name__ == "__main__":
     name = sys.argv[1]
     boards = readin(name)
+    print(len(boards))
+    puzzle = gen.SBP(boards[len(boards)-1], final)
+    puzzle.solve(mutate=True)
+    print("solved")
+    print(puzzle.sol.solpos)
+    for move in puzzle.sol.seq:
+        move.prin()
+    """
     max = 0
     top = []
-    with open(name+"_bands", "w+") as f, open(name+"_justscores", "w+") as scores:
+    with open(name+"_bands_adjusted", "w+") as f, open(name+"_justscores_adjusted", "w+") as scores:
         i = 1
         for board in boards:
+            if i>100:
+                break
             print("Board "+ str(i))
             puzzle = gen.SBP(board, final)
             puzzle.solve(mutate=True)
+            print("Solved")
             deps, var, length = evaluate(puzzle.sol, board)
-            score = deps+var+.3*length
+            score = 0*deps+9*var+1*length
             if score > max:
                 max = score
                 top = board
             f.write(str(deps)+", "+str(var)+", "+str(length)+"\n")
-            scores.write(str(i)+", " +str(deps)+", "+str(var)+", "+str(length)+"\n")
+            scores.write(str(i)+", " +str(deps)+", "+str(var)+", "+str(length)+", "+str(score)+"\n")
             f.write(str(score)+"\n")
             f.write(gen.writeboard(board))
             i += 1
 
     print(top)
     print(max)    
+"""
 

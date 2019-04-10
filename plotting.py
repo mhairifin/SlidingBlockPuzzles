@@ -102,10 +102,38 @@ def piechart():
     plt.axis('equal')
     plt.show()
 
+def scores_adjusted_graph():
+    scores = []
+    fifteens = []
+    with open("originalBoards_justscores", "r+") as read:
+        for line in read:
+            els = line.split(", ")
+            score = 9*float(els[2]) + float(els[3].strip())
+            scores.append(score)
+            fifteens.append(15)
+    
+    plt.plot(scores)
+    plt.plot(fifteens)
+    plt.show()
+
+def justscores_graph():
+    newscores = []
+    fifteens = []
+    with open("1000boardsIncremental_scores_best_justscores_adjusted", "r+") as read:
+        for line in read:
+            els = line.split(", ")
+            score = 9*float(els[2]) + float(els[3].strip())
+            scores.append(score)
+            fifteens.append(15)
+    
+    plt.plot(scores)
+    plt.plot(fifteens)
+    plt.show()
+
 def scores_graph():
     scores = []
     fifteens = []
-    with open("Data/1000boardsIncremental_scores", "r+") as read:
+    with open("1000boardsIncremental_scores_best_justscores_adjusted", "r+") as read:
         for line in read:
             els = line.split()
             if len(els) == 1:
@@ -123,4 +151,4 @@ def scores_graph():
 
 #mutatecomp()
 #simplebar()
-scores_graph()
+scores_adjusted_graph()

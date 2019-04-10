@@ -26,6 +26,8 @@ for i in range(0, 100, 1):
             intermed = []
             for item in data:
                 id, deps, var, length = item
+                if deps == 10 and var == 10 and length == 0:
+                    continue
                 score = i*deps+j*var+k*length
                 intermed.append((id, score))
             diff, order = evaluate(intermed)

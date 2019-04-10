@@ -146,11 +146,11 @@ class SBP():
         self.gb = SBP.getgoal(goal)
         self.max = False
 
-    def generate(self, mutate=True, chance = 0.12):
+    def generate(self, mutate=True, chance = 0.07):
         self.max = True
         self.solve(mutate=mutate, chance=chance, maximize = True)
                 
-    def solve(self, mutate=False, chance=0.12, maximize = False):
+    def solve(self, mutate=False, chance=0.07, maximize = False):
         self.mutate = mutate
         self.found = False
         self.pop = self.getpop(self.board, self.length, self.popsize)

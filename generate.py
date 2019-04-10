@@ -2,6 +2,9 @@ import genetic as gen
 
 import random
 
+import pygame
+from pygame import time
+
 size = 6
 
 available = []
@@ -204,7 +207,7 @@ class Maximize():
         return final
 
 class ImprovedIncremental():
-    def __init__(self, available):
+    def __init__(self):
         self.available = generateAvailable()
         self.twoslots, self.threeslots = genSlots()
         self.end = self.constructBoard()
@@ -226,27 +229,24 @@ class ImprovedIncremental():
         # make sure it is not trivially solvable, and is in the right row
         poss = [(0,1), (2,3), (2,3), (3,4)]
         rand = random.randint(0,3)
-        x1, x2 = poss[rand]
-        board[2][x1] = 1
-        board[2][x2] = 1
+        r1, r2 = poss[rand]
+        board[2][r1] = 1
+        board[2][r2] = 1
 
-        print(convertPosToSlot((2,x1), (2,x2)))
-        print(self.twoslots)
-
-        del self.twoslots[convertPosToSlot((2,x1), (2,x2))]
+        del self.twoslots[convertPosToSlot((2,r1), (2,r2))]
 
         # put on piece, generate level, check if solvable, repeat
 
-        while(len(available)>0):
+        while(len(self.available)>0):
         
             count+=1
 
-            print("ROUND: " + str(count))
-            
-            p = random.randrange(len(available))
-            id, s = available[p]
+            #print("ROUND: " + str(count))
 
-            del available[p]
+            p = random.randrange(len(self.available))
+            id, s = self.available[p]
+
+            del self.available[p]
 
             r = 0
             potslot = 0
@@ -256,13 +256,28 @@ class ImprovedIncremental():
                     r = random.randrange(len(self.twoslots))
                     poss.append(r)
 
+                bucket = []
                 for item in poss:
-                    potSlot = self.twoslots[r]
+                    potSlot = self.twoslots[item]
 
                     pos1, pos2 = convertSlotToPos(potSlot)
 
+                    x1, y1 = pos1
+                    x2, y2 = pos2
+
+                    bucket.append((pos1, pos2, item))
+
+                    if self.checkadjacent([pos1, pos2], board):
+                        bucket.append((pos1, pos2, item))
+                        
+                    if self.inway([pos1, pos2], r1, r2):
+                        bucket.append((pos1, pos2, item))
+                        
+                select = random.randrange(len(bucket))
+                pos1, pos2, r = bucket[select]
                 x1, y1 = pos1
                 x2, y2 = pos2
+                        
 
                 try:
                     if board[x1][y1] != 0 or board[x2][y2] != 0:
@@ -275,11 +290,12 @@ class ImprovedIncremental():
                     puzzle.solve(mutate=True)
 
                     if not puzzle.solved:
-                        available.append((id, s))
+                        self.available.append((id, s))
                         repeat += 1
                         if repeat >= 5:
                             board[x1][y1] = 0
                             board[x2][y2] = 0
+                            #print("stopped here")
                             return board
                         else:
                             board[x1][y1] = 0
@@ -287,7 +303,7 @@ class ImprovedIncremental():
                             del self.twoslots[r]
                             continue
                     else:
-                        gen.printboard(board)
+                        #gen.printboard(board)
                         del self.twoslots[r]
                 except:
                     gen.printboard(board)
@@ -295,15 +311,32 @@ class ImprovedIncremental():
                     print("SOMETHING WENT WRONG IN TWOSLOT")
 
             
-            elif s == 3 and len(threeslots)>0:
-                r = random.randrange(len(threeslots))
-                pos1, pos2, pos3 = threeslots[r]
+            elif s == 3 and len(self.threeslots)>0:
+                poss = []
+                for i in range(5):
+                    r = random.randrange(len(self.threeslots))
+                    poss.append(r)
+
+                bucket = []
+                for item in poss:
+                    pos1, pos2, pos3 = self.threeslots[item]
+                    bucket.append((pos1, pos2, pos3, item))
+                    
+                    if self.checkadjacent([pos1, pos2, pos3], board):
+                        bucket.append((pos1, pos2, pos3, item))
+
+                    if self.inway([pos1, pos2, pos3], r1, r2):
+                        bucket.append((pos1, pos2, pos3, item))
+
+                select = random.randrange(len(bucket))
+                pos1, pos2, pos3, r = bucket[select]
                 x1, y1 = pos1
                 x2, y2 = pos2
                 x3, y3 = pos3
+                    
                 try:
                     if board[x1][y1] != 0 or board[x2][y2] != 0 or board[x3][y3] != 0:
-                        del threeslots[r]
+                        del self.threeslots[r]
                         continue
                     board[x1][y1] = id
                     board[x2][y2] = id
@@ -313,29 +346,50 @@ class ImprovedIncremental():
                     puzzle.solve(mutate=True)
 
                     if not puzzle.solved:
-                        available.append((id, s))
+                        self.available.append((id, s))
                         repeat += 1
                         if repeat >= 5:
                             board[x1][y1] = 0
                             board[x2][y2] = 0
                             board[x3][y3] = 0
+                            #print("ended here")
                             return board
                         else:
                             board[x1][y1] = 0
                             board[x2][y2] = 0
                             board[x3][y3] = 0
-                            del threeslots[r]
+                            del self.threeslots[r]
                             continue
                     else:
-                        del threeslots[r]
+                        del self.threeslots[r]
                         
                 except:
                     gen.printboard(board)
-                    print(threeslots)
+                    print(self.threeslots)
                     print("SOMETHING WENT WRONG IN THREESLOT")
             else:
                 break
+        print("finished naturally")
         return board
+
+    def checkadjacent(self, positions, board):
+        for pos in positions:
+            x, y = pos
+            surrounds = [(x+1, y), (x-1, y), (x, y+1), (x, y-1)]
+            for r, c in surrounds:
+                if self.inbounds(r,c,len(board)) and board[r][c] != 0:
+                    return True
+        return False
+
+    def inbounds(self, x, y, size):
+        return x>= 0 and x<size and y>=0 and y<size
+
+    def inway(self, positions, r1, r2):
+        for pos in positions:
+            r,c = pos
+            if r == 2 and c > r2:
+                return True
+        return False
 
     
         
@@ -427,15 +481,15 @@ class Incremental():
                     print("SOMETHING WENT WRONG IN TWOSLOT")
 
             
-            elif s == 3 and len(threeslots)>0:
-                r = random.randrange(len(threeslots))
-                pos1, pos2, pos3 = threeslots[r]
+            elif s == 3 and len(self.threeslots)>0:
+                r = random.randrange(len(self.threeslots))
+                pos1, pos2, pos3 = self.threeslots[r]
                 x1, y1 = pos1
                 x2, y2 = pos2
                 x3, y3 = pos3
                 try:
                     if board[x1][y1] != 0 or board[x2][y2] != 0 or board[x3][y3] != 0:
-                        del threeslots[r]
+                        del self.threeslots[r]
                         continue
                     board[x1][y1] = id
                     board[x2][y2] = id
@@ -456,14 +510,14 @@ class Incremental():
                             board[x1][y1] = 0
                             board[x2][y2] = 0
                             board[x3][y3] = 0
-                            del threeslots[r]
+                            del self.threeslots[r]
                             continue
                     else:
-                        del threeslots[r]
+                        del self.threeslots[r]
                         
                 except:
                     gen.printboard(board)
-                    print(threeslots)
+                    print(self.threeslots)
                     print("SOMETHING WENT WRONG IN THREESLOT")
             else:
                 break
@@ -489,11 +543,20 @@ if __name__ == "__main__":
     puzzle = gen.SBP(level.end, final)
     gen.basicVisualise(puzzle)
     """
-    level = Random()
-    puzzle = gen.SBP(level.end, final)
-    gen.basicVisualise(puzzle)
+
+    pygame.init()
     
-        
+    with open("100ImprovedIncremental", "w+") as f:
+        for i in range(100):
+            print(i)
+            start = time.get_ticks()
+            level = ImprovedIncremental()
+            end = time.get_ticks()
+            puzzle = gen.SBP(level.end, final)
+            timetaken = end-start
+            print(timetaken)
+            f.write(str(timetaken) + "\n")
+            f.write(gen.writeboard(level.end))        
         
 
         
