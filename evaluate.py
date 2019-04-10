@@ -72,6 +72,7 @@ def readin(filename):
 if __name__ == "__main__":
     name = sys.argv[1]
     boards = readin(name)
+    """
     print(len(boards))
     puzzle = gen.SBP(boards[len(boards)-1], final)
     puzzle.solve(mutate=True)
@@ -103,6 +104,5 @@ if __name__ == "__main__":
             i += 1
 
     print(top)
-    print(max)    
-"""
+    print(max)
 

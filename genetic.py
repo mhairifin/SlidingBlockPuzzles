@@ -6,6 +6,7 @@ from enum import Enum
 import sys, pygame
 from pygame import time
 import numpy as np
+import math
 
 debug = False
 messages = False
