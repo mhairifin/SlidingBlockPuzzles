@@ -94,5 +94,4 @@ if __name__ == "__main__":
             i += 1
 
     print(top)
-    print(max)    
-
+    print(max)

@@ -74,16 +74,19 @@ class Random():
     def constructBoard(self, shuffle=1000):
         self.start = startRandom(self.available, self.twoslots, self.threeslots)
         gen.printboard(self.start)
-        board = gen.Board(self.start, gen.SBP.piecesFromMatrix(self.start))
+        return shuffleBoard(self.start)
+        
+    def shuffleBoard(matrix, shuffle = 100):
+        board = gen.Board(matrix, gen.SBP.piecesFromMatrix(matrix))
         moves = []
         for num in range(shuffle):
             move=gen.SBP.getvalidmove(board)
             move, board, empty = gen.SBP.domove(move, board)
             moves.append(move)
-        gen.printboard(board.matrix)
         return board.matrix
         
-    def createBoard(self, size, numPieces):
+        
+    def create15Board(self, size, numPieces):
         pieces = list(range(1, numPieces+1))
         empties = (size**2)-numPieces
         for item in range(empties):
@@ -243,7 +246,7 @@ class ImprovedIncremental():
         
             count+=1
 
-            #print("ROUND: " + str(count))
+            print("ROUND: " + str(count))
 
             p = random.randrange(len(self.available))
             id, s = self.available[p]
@@ -309,8 +312,7 @@ class ImprovedIncremental():
                         del self.twoslots[r]
                 except:
                     gen.printboard(board)
-                    print(self.twoslots)
-                    print("SOMETHING WENT WRONG IN TWOSLOT")
+                    sys.exit(0)
 
             
             elif s == 3 and len(self.threeslots)>0:
@@ -367,6 +369,7 @@ class ImprovedIncremental():
                         
                 except:
                     gen.printboard(board)
+                    sys.exit(0)
                     print(self.threeslots)
                     print("SOMETHING WENT WRONG IN THREESLOT")
             else:
@@ -400,6 +403,7 @@ class Incremental():
     def __init__(self):
         self.available = generateAvailable()
         self.twoslots, self.threeslots = genSlots()
+        self.randomize = shuffle
         self.end = self.constructBoard()
 
     def constructBoard(self):
@@ -520,6 +524,9 @@ class Incremental():
                     print("SOMETHING WENT WRONG IN THREESLOT")
             else:
                 break
+
+        if self.randomize:
+            return Random.shuffleBoard(board)
         return board
 
 if __name__ == "__main__":
@@ -532,6 +539,31 @@ if __name__ == "__main__":
     with open(place, "w+") as f:
         for i in range(number):
             print(f"Generating Board {i+1}")
+    """
+    with open("100boardsGenetic", "w+") as f:
+        for i in range(100):
+            generateAvailable()
+            genSlots()
+            level = Maximize(available)
+            gen.printboard(level.end)
+            puzzle = gen.SBP(level.end, final)
+            puzzle.solve(mutate=True)
+            f.write(str(puzzle.solved) + "\n" + str(puzzle.sol.solpos+1) + "\n")
+            f.write(gen.writeboard(level.end))
+    """
+    """
+    generateAvailable()
+    genSlots()
+    level=Maximize(available)
+    puzzle = gen.SBP(level.end, final)
+    gen.basicVisualise(puzzle)
+    """
+    """
+    pygame.init()
+    
+    with open("40ImprovedIncremental", "w+") as f:
+        for i in range(40):
+            print(i)
             start = time.get_ticks()
             level = globals()[generator]()
             end = time.get_ticks()
@@ -540,7 +572,9 @@ if __name__ == "__main__":
             print(timetaken)
             f.write(str(timetaken) + "\n")
             f.write(gen.writeboard(level.end))        
-        
+      """
+    level = Incremental(shuffle=True)
+    gen.printboard(level.end)
 
         
         

@@ -105,22 +105,29 @@ def piechart():
     plt.show()
 
 def scores_adjusted_graph():
+    improvedscores = []
     scores = []
-    fifteens = []
-    with open("originalBoards_justscores", "r+") as read:
+    with open("40ImprovedIncremental_justscores_adjusted", "r+") as read:
         for line in read:
             els = line.split(", ")
-            score = 9*float(els[2]) + float(els[3].strip())
+            score = float(els[2])
+            improvedscores.append(score)
+
+    with open("Data/1000boardsIncremental_scores_best_justscores_adjusted", "r+") as read:
+        for line in read:
+            els = line.split(", ")
+            score = float(els[2])
             scores.append(score)
-            fifteens.append(15)
-    
+            if len(scores) == len(improvedscores):
+                break
+
     plt.plot(scores)
-    plt.plot(fifteens)
+    plt.plot(improvedscores)
     plt.show()
 
 def justscores_graph():
     newscores = []
-    fifteens = []
+    oldscores = []
     with open("1000boardsIncremental_scores_best_justscores_adjusted", "r+") as read:
         for line in read:
             els = line.split(", ")
