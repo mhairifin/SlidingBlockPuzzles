@@ -2,7 +2,9 @@ import genetic as gen
 
 import random
 
-import pygame
+import contextlib
+with contextlib.redirect_stdout(None):
+    import pygame
 from pygame import time
 
 import sys
@@ -74,7 +76,7 @@ class Random():
     def constructBoard(self, shuffle=1000):
         self.start = startRandom(self.available, self.twoslots, self.threeslots)
         gen.printboard(self.start)
-        return shuffleBoard(self.start)
+        return Random.shuffleBoard(self.start)
         
     def shuffleBoard(matrix, shuffle = 100):
         board = gen.Board(matrix, gen.SBP.piecesFromMatrix(matrix))
@@ -133,12 +135,12 @@ def startRandom(available, twoslots, threeslots):
             board[x2][y2] = id
         elif s==3 and len(threeslots)>0:
             r = random.randrange(len(threeslots))
-            pos1, pos2, pos3 = self.threeslots[r]
+            pos1, pos2, pos3 = threeslots[r]
             x1, y1 = pos1
             x2, y2 = pos2
             x3, y3 = pos3
             if board[x1][y1] != 0 or board[x2][y2] != 0 or board[x3][y3] != 0:
-                del self.threeslots[r]
+                del threeslots[r]
                 continue
             board[x1][y1] = id
             board[x2][y2] = id
@@ -539,6 +541,14 @@ if __name__ == "__main__":
     with open(place, "w+") as f:
         for i in range(number):
             print(f"Generating Board {i+1}")
+            start = time.get_ticks()
+            level = globals()[generator]()
+            end = time.get_ticks()
+            puzzle = gen.SBP(level.end, final)
+            timetaken = end-start
+            print(timetaken)
+            f.write(str(timetaken) + "\n")
+            f.write(gen.writeboard(level.end))
     """
     with open("100boardsGenetic", "w+") as f:
         for i in range(100):
@@ -573,8 +583,6 @@ if __name__ == "__main__":
             f.write(str(timetaken) + "\n")
             f.write(gen.writeboard(level.end))        
       """
-    level = Incremental(shuffle=True)
-    gen.printboard(level.end)
 
         
         
