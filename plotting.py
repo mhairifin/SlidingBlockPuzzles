@@ -205,9 +205,8 @@ def getScores(filename):
 
 def plotScores():
     plt.plot(getScores("Data/1000boardsIncremental"), label="Incremental scores")
-    plt.plot(getLengths("50imps"), label="Improved Incremental scores")
-    print(getLengths("50incs"))
-    plt.plot(getLengths("50genetics"), label="Genetic scores")
+    plt.plot(getScores("50imps"), label="Improved Incremental scores")
+    plt.plot(getScores("50genetics"), label="Genetic scores")
     plt.legend()
     plt.title("Scores of generation methods")
     plt.show()
@@ -273,7 +272,6 @@ def getLongest():
 
 #topScores()
 getLongest()
-
 #mutatecomp()
 #simplebar()
 #scores_adjusted_graph()
