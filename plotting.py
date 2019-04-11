@@ -211,7 +211,7 @@ def plotScores():
     plt.legend()
     plt.title("Scores of generation methods")
     plt.show()
-
+    
 def hiScore(item):
     i, score = item
     return score
@@ -236,7 +236,29 @@ def topScores():
     print(f"Incremental: {inctops}")
     print(f"Improved Incremental: {imptops}")
     print(f"Genetic: {gentops}")
- 
+
+def longestLength(filename):
+    highest = 0
+    hold = ()
+    i = 1
+    with open(filename+ "_justscores_adjusted", "r+") as f:
+        for line in f:
+            els = line.split(", ")
+            length = int(els[3])
+            if length>highest:
+                highest = length
+                hold = (i, length, int(els[1]), int(els[2]))
+            i+=1
+    return hold
+
+def getLongest():
+    inctops = longestLength("Data/1000boardsIncremental")
+    imptops = longestLength("50imps")
+    gentops = longestLength("50genetics")
+
+    print(f"Incremental: {inctops}")
+    print(f"Improved Incremental: {imptops}")
+    print(f"Genetic: {gentops}")
 
     
     
@@ -249,7 +271,8 @@ def topScores():
 #distcomp()
 #plotdist()
 
-topScores()
+#topScores()
+getLongest()
 
 #mutatecomp()
 #simplebar()
