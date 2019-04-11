@@ -46,8 +46,7 @@ def variety(seq):
 # possibly based on ranking of existing rush hour puzzles
 def evaluate(sequence, board):
     solution = confine(sequence)
-    #deps = dependents(solution, gen.Board(board))
-    deps = 0
+    deps = dependents(solution, gen.Board(board))
     var = variety(solution)
     length = len(solution)
 
@@ -72,20 +71,12 @@ def readin(filename):
 if __name__ == "__main__":
     name = sys.argv[1]
     boards = readin(name)
-    print(len(boards))
-    puzzle = gen.SBP(boards[len(boards)-1], final)
-    puzzle.solve(mutate=True)
-    print("solved")
-    print(puzzle.sol.solpos)
-    for move in puzzle.sol.seq:
-        move.prin()
-    """
     max = 0
     top = []
-    with open(name+"_bands_adjusted", "w+") as f, open(name+"_justscores_adjusted", "w+") as scores:
+    with open(name+"_limited_bands", "w+") as f, open(name+"_limited_scores", "w+") as scores:
         i = 1
         for board in boards:
-            if i>100:
+            if i%5 == 0:
                 break
             print("Board "+ str(i))
             puzzle = gen.SBP(board, final)
@@ -104,5 +95,4 @@ if __name__ == "__main__":
 
     print(top)
     print(max)    
-"""
 

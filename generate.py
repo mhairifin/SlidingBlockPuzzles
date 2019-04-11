@@ -5,6 +5,8 @@ import random
 import pygame
 from pygame import time
 
+import sys
+
 size = 6
 
 available = []
@@ -128,12 +130,12 @@ def startRandom(available, twoslots, threeslots):
             board[x2][y2] = id
         elif s==3 and len(threeslots)>0:
             r = random.randrange(len(threeslots))
-            pos1, pos2, pos3 = threeslots[r]
+            pos1, pos2, pos3 = self.threeslots[r]
             x1, y1 = pos1
             x2, y2 = pos2
             x3, y3 = pos3
             if board[x1][y1] != 0 or board[x2][y2] != 0 or board[x3][y3] != 0:
-                del threeslots[r]
+                del self.threeslots[r]
                 continue
             board[x1][y1] = id
             board[x2][y2] = id
@@ -161,11 +163,11 @@ class Maximize():
         board[2][4] = 1
         board[2][5] = 1
 
-        while len(available)>0:
-            p = random.randrange(len(available))
-            id, s = available[p]
+        while len(self.available)>0:
+            p = random.randrange(len(self.available))
+            id, s = self.available[p]
 
-            del available[p]
+            del self.available[p]
 
             if s==2 and len(self.twoslots)>0:
                 r = random.randrange(len(self.twoslots))
@@ -182,13 +184,13 @@ class Maximize():
                 board[x1][y1] = id
                 board[x2][y2] = id
             elif s==3 and len(self.threeslots)>0:
-                r = random.randrange(len(threeslots))
-                pos1, pos2, pos3 = threeslots[r]
+                r = random.randrange(len(self.threeslots))
+                pos1, pos2, pos3 = self.threeslots[r]
                 x1, y1 = pos1
                 x2, y2 = pos2
                 x3, y3 = pos3
                 if board[x1][y1] != 0 or board[x2][y2] != 0 or board[x3][y3] != 0:
-                    del threeslots[r]
+                    del self.threeslots[r]
                     continue
                 board[x1][y1] = id
                 board[x2][y2] = id
@@ -395,7 +397,7 @@ class ImprovedIncremental():
         
 
 class Incremental():
-    def __init__(self, available):
+    def __init__(self):
         self.available = generateAvailable()
         self.twoslots, self.threeslots = genSlots()
         self.end = self.constructBoard()
@@ -421,23 +423,20 @@ class Incremental():
         board[2][x1] = 1
         board[2][x2] = 1
 
-        print(convertPosToSlot((2,x1), (2,x2)))
-        print(self.twoslots)
-
         del self.twoslots[convertPosToSlot((2,x1), (2,x2))]
 
         # put on piece, generate level, check if solvable, repeat
 
-        while(len(available)>0):
+        while(len(self.available)>0):
         
             count+=1
 
             print("ROUND: " + str(count))
 
-            p = random.randrange(len(available))
-            id, s = available[p]
+            p = random.randrange(len(self.available))
+            id, s = self.available[p]
 
-            del available[p]
+            del self.available[p]
 
             r = 0
             potslot = 0
@@ -461,7 +460,7 @@ class Incremental():
                     puzzle.solve(mutate=True)
 
                     if not puzzle.solved:
-                        available.append((id, s))
+                        self.available.append((id, s))
                         repeat += 1
                         if repeat >= 5:
                             board[x1][y1] = 0
@@ -499,7 +498,7 @@ class Incremental():
                     puzzle.solve(mutate=True)
 
                     if not puzzle.solved:
-                        available.append((id, s))
+                        self.available.append((id, s))
                         repeat += 1
                         if repeat >= 5:
                             board[x1][y1] = 0
@@ -524,33 +523,17 @@ class Incremental():
         return board
 
 if __name__ == "__main__":
-    """
-    with open("100boardsGenetic", "w+") as f:
-        for i in range(100):
-            generateAvailable()
-            genSlots()
-            level = Maximize(available)
-            gen.printboard(level.end)
-            puzzle = gen.SBP(level.end, final)
-            puzzle.solve(mutate=True)
-            f.write(str(puzzle.solved) + "\n" + str(puzzle.sol.solpos+1) + "\n")
-            f.write(gen.writeboard(level.end))
-    """
-    """
-    generateAvailable()
-    genSlots()
-    level=Maximize(available)
-    puzzle = gen.SBP(level.end, final)
-    gen.basicVisualise(puzzle)
-    """
+    generator = sys.argv[1]
+    number = int(sys.argv[2])
+    place = sys.argv[3]
 
     pygame.init()
     
-    with open("100ImprovedIncremental", "w+") as f:
-        for i in range(100):
-            print(i)
+    with open(place, "w+") as f:
+        for i in range(number):
+            print(f"Generating Board {i+1}")
             start = time.get_ticks()
-            level = ImprovedIncremental()
+            level = globals()[generator]()
             end = time.get_ticks()
             puzzle = gen.SBP(level.end, final)
             timetaken = end-start

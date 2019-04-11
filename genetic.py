@@ -6,6 +6,7 @@ from enum import Enum
 import sys, pygame
 from pygame import time
 import numpy as np
+import math
 
 debug = False
 messages = False
@@ -138,7 +139,7 @@ class SBP():
     
     def __init__(self, problem, goal):
         self.length = 7
-        self.popsize = 49
+        self.popsize = 100
         self.sol = None
         self.zero = SBP.findzeros(problem)
         self.board = Board(problem, SBP.getPieces(problem))
@@ -165,7 +166,7 @@ class SBP():
         self.inc = 0
 
         self.gen = 0
-        while self.keepgoing() and self.gen<100:
+        while self.keepgoing() and self.gen<200:
             self.pop = self.crossover(self.sel)
             self.lastsel = self.sel
             self.sel = self.select(max=maximize)

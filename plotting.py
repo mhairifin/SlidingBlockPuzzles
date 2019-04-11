@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+import heapq
+
 nonmut = []
 mut = []
 dist = []
@@ -146,9 +148,102 @@ def scores_graph():
     plt.plot(fifteens)
     plt.show()
 
+def getTimes(filename):
+    times = []
+    with open(filename, "r+") as f:
+        for line in f:
+            els = line.split()
+            if len(els) == 1:
+                times.append(int(els[0]))
+    return times
+
+def plotTimes():
+    inctimes = getTimes("50incs")
+    imptimes = getTimes("50imps")
+    gentimes = getTimes("50genetics")
+
+    plt.plot(inctimes, label="Basic Incremental Times")
+    plt.plot(imptimes, label="Improved Incremental Times")
+    plt.plot(gentimes, label="Genetic Times")
+    plt.title("Time taken for different generating techniques")
+    plt.legend()
+    plt.show()
+
+def getLengths(filename):
+    lengths = []
+    with open(filename+ "_justscores_adjusted", "r+") as f:
+        for line in f:
+            els = line.split(", ")
+            if int(els[3]) != 1:
+                lengths.append(int(els[3]))
+    return lengths
+
+def plotSolutionLengths():
+    plt.plot(getLengths("Data/1000boardsIncremental"), label="Incremental solution lengths")
+    plt.plot(getLengths("50imps"), label="Improved Incremental solution lengths")
+    print(getLengths("50incs"))
+    plt.plot(getLengths("50genetics"), label="Genetic solution lengths")
+    plt.legend()
+    plt.title("Solution lengths of generation methods")
+    plt.show()
+
+def getScores(filename):
+    scores = []
+    with open(filename+ "_justscores_adjusted", "r+") as f:
+        for line in f:
+            els = line.split(", ")
+            if int(els[3]) != 1:
+                scores.append(float(els[1])+float(els[2])+0.3*float(els[3]))
+    return scores
+
+def plotScores():
+    plt.plot(getScores("Data/1000boardsIncremental"), label="Incremental scores")
+    plt.plot(getLengths("50imps"), label="Improved Incremental scores")
+    print(getLengths("50incs"))
+    plt.plot(getLengths("50genetics"), label="Genetic scores")
+    plt.legend()
+    plt.title("Scores of generation methods")
+    plt.show()
+
+def hiScore(item):
+    i, score = item
+    return score
+
+def topFromFile(filename):
+    scores = []
+    i = 0
+    with open(filename+ "_justscores_adjusted", "r+") as f:
+        for line in f:
+            els = line.split(", ")
+            if int(els[3]) != 1:
+                score = float(els[1])+float(els[2])+0.3*float(els[3])
+                scores.append((i, score))
+                i+= 1
+    return heapq.nlargest(3, scores, key=hiScore)
+
+def topScores():
+    inctops = topFromFile("Data/1000boardsIncremental")
+    imptops = topFromFile("50imps")
+    gentops = topFromFile("50genetics")
+
+    print(f"Incremental: {inctops}")
+    print(f"Improved Incremental: {imptops}")
+    print(f"Genetic: {gentops}")
+ 
+
+    
+    
+    
+
+#plotTimes()
+#plotSolutionLengths()
+#plotScores()
+
 #distcomp()
 #plotdist()
 
+topScores()
+
 #mutatecomp()
 #simplebar()
-scores_adjusted_graph()
+#scores_adjusted_graph()
