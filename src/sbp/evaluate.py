@@ -1,0 +1,117 @@
+"""
+Solves puzzles collected from a file,
+and then generates scores based on their solutions
+"""
+
+import genetic as gen
+import copy
+import sys
+
+final = [[0,0,0,0,0,0],
+         [0,0,0,0,0,0],
+         [0,0,0,0,1,1],
+         [0,0,0,0,0,0],
+         [0,0,0,0,0,0],
+         [0,0,0,0,0,0]]
+
+
+# returns a list of moves that solves the puzzle
+# from a Sequence object
+def confine(sequence):
+    return sequence.seq[:sequence.solpos+1]
+
+# Applies a sequence in reverse to a board
+# counts how many moves are invalid
+# these moves are dependent
+def dependents(seq, board):
+    count = 0
+    for move in reversed(seq):
+        if gen.SBP.legal(move, board):
+            move, board, empty = gen.SBP.domove(move, board)
+        else:
+            count += 1
+    if len(seq) != 0:
+        return count/len(seq)*10
+    else:
+        return 10
+
+# counts how many different pieces are used in a solution
+# this is the variety of the moves
+def variety(seq):
+    pieces = set()
+    for move in seq:
+        if move.piece.id not in pieces:
+            pieces.add(move.piece.id)
+    if len(seq) != 0:
+        return len(pieces)/len(seq)*10
+    else:
+        return 10
+
+# need to define some ideal weighting
+# possibly based on ranking of existing rush hour puzzles
+def evaluate(sequence, board):
+    solution = confine(sequence)
+    #deps = dependents(solution, gen.Board(board))
+    deps = 0
+    var = variety(solution)
+    length = len(solution)
+
+    return (deps, var, length)
+
+def readin(filename):
+    boards = []
+    with open(filename, "r+") as f:
+        board = []
+        for line in f:
+            things = line.split()
+            if len(things) > 1:
+                row = []
+                for p in things:
+                    row.append(int(p))
+                board.append(row)
+            if len(board) == 6:
+                boards.append(copy.deepcopy(board))
+                board = []
+    return boards
+
+"""
+Writes scores separated, and directly, to a file
+Also writes the scores with the boards to a separate file
+"""
+if __name__ == "__main__":
+    name = sys.argv[1]
+    boards = readin(name)
+    """
+    print(len(boards))
+    puzzle = gen.SBP(boards[len(boards)-1], final)
+    puzzle.solve(mutate=True)
+    print("solved")
+    print(puzzle.sol.solpos)
+    for move in puzzle.sol.seq:
+        move.prin()
+    """
+    max = 0
+    top = []
+    with open(name+"_bands_adjusted", "w+") as f, open(name+"_justscores_adjusted", "w+") as scores:
+        i = 1
+        for board in boards:
+            if i>100:
+                break
+            print("Board "+ str(i))
+            puzzle = gen.SBP(board, final)
+            puzzle.solve(mutate=True)
+            print("Solved")
+            deps, var, length = evaluate(puzzle.sol, board)
+            score = 0*deps+9*var+1*length
+            if score > max:
+                max = score
+                top = board
+            f.write(str(deps)+", "+str(var)+", "+str(length)+"\n")
+            scores.write(str(i)+", " +str(deps)+", "+str(var)+", "+str(length)+", "+str(score)+"\n")
+            f.write(str(score)+"\n")
+            f.write(gen.writeboard(board))
+            i += 1
+
+    print(top)
+    print(max)
+

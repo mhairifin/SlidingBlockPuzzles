@@ -1,3 +1,7 @@
+"""
+Contains a genetic algorithm for solving sliding block puzzles
+"""
+
 import random
 import heapq
 import copy
@@ -11,82 +15,15 @@ import math
 debug = False
 messages = False
 
-def test():
-    i = [[0,0,0,1,1,1],
-         [0,0,0,0,0,0],
-         [2,2,0,0,3,0],
-         [0,0,4,0,3,0],
-         [0,0,4,0,3,0],
-         [0,0,0,5,5,0]]
-    f = [[0,0,0,0,0,0],
-         [0,0,0,0,0,0],
-         [0,0,0,0,2,2],
-         [0,0,0,0,0,0],
-         [0,0,0,0,0,0],
-         [0,0,0,0,0,0]]
-    puzzle = SBP(i, f)
-    #SBP.getvalidmove(puzzle.board).prin()
-
-    puzzle.solve(mutate=True)
-    sollen = puzzle.sol.solpos+1
-    if puzzle.sol == None:
-        print(str(puzzle.pop[0].seq))
-    else:
-        print("score " + str(puzzle.sol.score) + " and solution length " + str(puzzle.sol.solpos+1))
-        if messages:
-            puzzle.sol.show()
-    visualize(puzzle)
-    
-def main():
-    initsbp = [[1, 2, 3, 4],[6, 9, 0, 8],[5, 10, 7, 11], [12, 13, 14, 15]]
-    finsbp = [[1,2,3,4],[5,6,7,8],[9,0,10,11], [12, 13, 14, 15]]
-    init = [[1,2,3,4], [5,6,7,8], [9, 10, 0, 11], [12,13,14,15]]
-    i = [[1,2], [0,3]]
-    f = [[1,2], [3,0]]
-    puzzle = SBP(initsbp, finsbp, rounds)
-    if puzzle.sol == None:
-        print(str(puzzle.pop[0].seq))
-    else:
-        print("score " + str(puzzle.sol.score) + " and solution length " + str(puzzle.sol.solpos+1))
-        puzzle.sol.show()
-    
-    printboard(initsbp)
-    printboard(finsbp)
-    #explore(puzzle)
-
-def explore(puzzle):
-    yn = input("Would you like to explore this result?")
-    if yn=='y':
-        us = input("Enter sel for select, pop for population, res to see succesfull sequence, quit to quit")
-        while us != "quit":
-            if us == "sel":
-                seeseqs(puzzle.sel)
-            elif us == "pop":
-                seeseqs(puzzle.pop)
-            elif us == "res":
-                print(getrep(puzzle.sol))
-            us = input("Enter sel for select, pop for population, res to see succesful sequence, quit to quit")
-
-def getrep(sol):
-    seq = sol.seq
-    solin = sol.solpos
-    for i in range(len(seq)):
-        print(seq[i][0], end=", ")
-    print()
-
-def seeseqs(select):
-    for item in select:
-        l = item.solpos + 1
-        if len == 0:
-            l = len(item.seq)    
-        print("Score: " + str(item.score) + "\tLength: " + str(l))
-
 def getavg(select):
     tot = 0
     for i in select:
         tot+=i.score
     return tot/len(select)
-    
+
+"""
+Directions for pieces
+"""
 class Compass():
     LEFT = (0,-1)
     RIGHT = (0,1)
@@ -113,7 +50,9 @@ class Compass():
         if dir == Compass.DOWN:
             return "DOWN"
 
-
+"""
+Representation of a board
+"""
 class Board():
     def __init__(self, problem, pieces=None):
         self.matrix = problem
@@ -130,7 +69,10 @@ class Board():
             r,c = loc
             id = self.matrix[r][c]
         return self.pieces[id]
-        
+
+"""
+Representation of a sliding block puzzle to be solved
+"""
 class SBP():
 
     EMPTY = 0
@@ -147,6 +89,9 @@ class SBP():
         self.gb = SBP.getgoal(goal)
         self.max = False
 
+    """
+    Function for use by genetic generator
+    """
     def generate(self, mutate=True, chance = 0.07):
         self.max = True
         self.solve(mutate=mutate, chance=chance, maximize = True)
@@ -166,6 +111,8 @@ class SBP():
         self.inc = 0
 
         self.gen = 0
+
+        # number of generations is limited to 100
         while self.keepgoing() and self.gen<100:
             self.pop = self.crossover(self.sel)
             self.lastsel = self.sel
@@ -214,15 +161,14 @@ class SBP():
     def getgoal(goal):
         return SBP.piecesFromMatrix(goal)
 
+    """
+    Decides whether the alogirthm should continue based on 
+    whether the average is staying consistent
+    Also extends the sequence when necessary
+    """
     def keepgoing(self):
         if not self.found:
             if self.lastavg != None and self.curravg != None and self.favours(self.lastavg,self.curravg):
-                """
-                for item in self.sel:
-                    seeseqs(self.sel)
-                for item in self.lastsel:
-                    seeseqs(self.sel)
-                """
                 return False
             if self.curravg == self.lastavg:
                 self.inc += 1
@@ -268,6 +214,9 @@ class SBP():
         best = heapq.nsmallest(int(self.selectSize()), self.pop, key=SBP.getscore)
         return best
 
+    """
+    Gets the number to select from a population to keep a consistent population size
+    """
     def selectSize(self):
         return math.sqrt(self.popsize)
         
@@ -294,7 +243,10 @@ class SBP():
         if board.matrix[mr][mc] != move.piece.id:
             return False
         return True
-                        
+
+    """
+    Crosses two sequences to obtain a third, child sequence
+    """
     def getchild(self, mum, dad):
         child = []
         ibalter = self.board.copy()
@@ -306,7 +258,7 @@ class SBP():
         
         for i in range(len(mum.seq)):
             rand = random.random()
-            if rand >= self.chance or not self.mutate: #5% chance of mutation, or not a mutate round
+            if rand >= self.chance or not self.mutate: # small chance of mutation
                 ibmum = ibalter.copy()
                 ibdad = ibalter.copy()
 
@@ -323,6 +275,7 @@ class SBP():
 
                     chance = random.random()
 
+                    # 80% probability of selecting the most favourable move
                     if (self.favours(totm,totd) and chance<0.8) or (not self.favours(totm,totd) and chance >= 0.8):
                         child.append(mum.seq[i])
                         ibalter = ibmum
@@ -389,7 +342,10 @@ class SBP():
                 if ib[i][j] == 0:
                     zeros.append((i,j))
         return zeros
-        
+
+    """
+    Gets a valid move from a board
+    """
     def getvalidmove(board):
         zeros = SBP.findzeros(board.matrix)
         possmoves = []
@@ -404,27 +360,33 @@ class SBP():
             printboard(board.matrix)
             print(zeros)
             print(len(possmoves))
-   
+
+    """ 
+    Gets all possible moves on the board from one empty spot
+    """
     def getMoves(z, board):
         moves = []
         rz, cz = z
-        if board.matrix[rz][cz] != SBP.EMPTY:
-            print("BAD!!!!")
         for k in SBP.dirs:
             r,c = SBP.add(z, SBP.dirs[k])
             if SBP.check(r,c,board) and SBP.moveable(r,c, board, SBP.dirs[k]): # check there is something in that space and it can move
                 moves.append(Move(z, Compass.opp(SBP.dirs[k]), board.getpiece(loc=(r,c))))
         return moves
-        
             
     def add(t1, t2):
         x,y = t1
         s,p = t2
         return (x+s, y+p)
-            
+
+    """
+    Checks that a placement is within bounds, and there is a piece there
+    """
     def check(r, c, board):
         return SBP.within(r, c, board) and board.matrix[r][c] != SBP.EMPTY
-        
+
+    """
+    Checks if a piece can move in a given direction
+    """
     def moveable(r,c,board, dir):
         d = board.getpiece(loc=(r,c)).dir
         if d == Dir.BOTH:
@@ -447,7 +409,9 @@ class SBP():
                 return zeros
         return zeros
 
-    # calculate manhattan before running get sequence
+    """
+    Gets a random sequence of moves
+    """
     def getsequence(self, length, board, ongoingscore = None, zeros = None):
         if zeros == None:
             zeros = SBP.findzeros(board.matrix) 
@@ -471,7 +435,10 @@ class SBP():
             if ongoingscore == 0 and solpos == -1:
                 solpos = i
         return Sequence(seq, score, ibalter, solpos)
-                
+
+    """
+    Gets the manhattan score of a board
+    """
     def manhattan(self, ib):
         score = 0
         for id in ib.pieces:
@@ -488,8 +455,6 @@ class SBP():
         return 0
 
     def domove(move, ib):
-        if not SBP.legal(move, ib):
-            print("This should not happen")
         l = move.piece.length()
         newempty = SBP.add(move.empty, SBP.times(Compass.opp(move.dir), l))
         positions = ib.getpiece(id=move.piece.id).posits
@@ -523,43 +488,6 @@ class SBP():
         r*=n
         c*=n
         return (r,c)            
-        
-
-# Generates 15 puzzle level
-class Level():
-    EMPTY = 0
-    def __init__(self, size, numPieces, dist):
-        self.end = self.createBoard(size, numPieces)
-        self.genStart(dist)
-
-    def createBoard(self, size, numPieces):
-        pieces = list(range(1, numPieces+1))
-        empties = (size**2)-numPieces
-        for item in range(empties):
-            pieces.append(Level.EMPTY)
-        random.shuffle(pieces)
-        board = []
-        for i in range(size):
-            row = []
-            for j in range(size):
-                row.append(pieces[i*size+j])
-            board.append(row)
-        return Board(board, SBP.piecesFromMatrix(board))
-
-    def genStart(self, dist):
-        self.start = self.end.copy()
-        moves = []
-        for num in range(dist):
-            move = SBP.getvalidmove(self.start)
-            move, self.start, empty = SBP.domove(move, self.start)
-            moves.append(move)
-        if messages:
-            for move in moves:
-                move.prin()
-            print("-------------")
-            print("Distance: " + str(len(moves)))
-            print("-------------")
-
 
 class Move():
     def __init__(self, empty, direction, piece):
@@ -640,214 +568,8 @@ def writeboard(ib):
     string += "\n\n"
     return string
 
-def tilelevelstuff():
-    length = 4
-    dist = 15
-    level1 = Level(length, length*length-1, dist)
-    if messages:
-        print("Start: ")
-        printboard(level1.start.matrix)
-        print("Goal: ")
-        printboard(level1.end.matrix)
-    puzzle = SBP(level1.start.matrix, level1.end.matrix)
-    puzzle.solve(mutate=True)
-    sollen = puzzle.sol.solpos+1
-    if puzzle.sol == None:
-        print(str(puzzle.pop[0].seq))
-    else:
-        print("score " + str(puzzle.sol.score) + " and solution length " + str(puzzle.sol.solpos+1))
-        if messages:
-            puzzle.sol.show()
-    if sollen != 0:
-        visualize(puzzle)
-        if sollen <= dist and messages:
-            print("Well done!")
-
-def compareDifficulty(dist, f):
-    print("Running with distance: " + str(dist))
-    length = 4
-    level1 = Level(length, length*length-1, dist)
-    
-    puzzle = SBP(level1.start.matrix, level1.end.matrix)
-    start = time.get_ticks()
-    puzzle.solve(mutate=True)
-    end = time.get_ticks()
-    sollen = puzzle.sol.solpos+1
-
-    if sollen == 0:
-        sollen = None
-
-    f.write(str(dist) + ", " + str(sollen) + ", " + str(end-start) + "\n")
-
-    print("Length: " + str(sollen))
-    print("Took "  + str(end-start) + " ms to find solution")
-
-def compareMutate(f):
-    
-    length = 4
-    dist = 25
-    level1 = Level(length, length*length-1, dist)
-    
-    puzzle = SBP(level1.start.matrix, level1.end.matrix)
-    start1 = time.get_ticks()
-    puzzle.solve()
-    end1 = time.get_ticks()
-    sollen = puzzle.sol.solpos+1
-    
-    puzzle2 = SBP(level1.start.matrix, level1.end.matrix)
-    start2 = time.get_ticks()
-    puzzle.solve(mutate=True)
-    end2 = time.get_ticks()
-    sollenm = puzzle.sol.solpos+1
-
-    if sollen == 0:
-        sollen = None
-    if sollenm == 0:
-        sollenm = None
-    
-    f.write(str(end1-start1) + ", " + str(sollen) + ", " + str(end2-start2) + ", " + str(sollenm) + "\n")
-
-    
-
-    print("w/o mutate: " + str(end1-start1) + " ms\t" + str(sollen) + " moves")
-    print("w/ mutate: " + str(end2-start2) + " ms\t" + str(sollenm) + " moves")
-
-class Visual():
-    BLACK = 0,0,0
-    WHITE = 255,255,255
-    def __init__(self, puzzle):
-        self.puzzle = puzzle
-        self.board = puzzle.board.copy()
-        self.length = len(puzzle.board.matrix)
-        pygame.init()
-        size = 700, 300
-        self.screen = pygame.display.set_mode(size)
-        self.screen.fill(Visual.WHITE)
-        pygame.display.flip()
-        self.pieceIms = Visual.generateIms(puzzle.board.pieces)
-        self.col = Visual.BLACK
-
-    def button(self, msg, x, y, w, h, colour, colourhover, action):
-        mouse = pygame.mouse.get_pos()
-        click = pygame.mouse.get_pressed()
-        if x+w > mouse[0] > x and y+h > mouse[1] > y:
-            pygame.draw.rect(self.screen, colourhover,(x,y,w,h))
-            if click[0]:
-                action()
-        else:
-            pygame.draw.rect(self.screen, colour,(x,y,w,h))
-        f = pygame.font.Font("freesansbold.ttf",20)
-        textSurface = f.render(msg, True, Visual.BLACK)
-        textRect = textSurface.get_rect()
-        textRect.center = ( (x+(w/2)), (y+(h/2)) )
-        self.screen.blit(textSurface, textRect)
-
-    def generateIms(pieces):
-        ims = {}
-        myfont = pygame.font.SysFont('Arial', 30)
-        for id in pieces:
-            color = np.random.choice(range(256), size=3)
-            ims[id] = myfont.render(str(id), False, color)
-        return ims
-
-    def drawGoal(self):
-        w,h = 40,40
-        y = 50
-        startx = self.length*w+3*y
-        for i in range(self.length):
-            x = startx
-            for j in range(self.length):
-                id = self.puzzle.goal[i][j]
-                pygame.draw.rect(self.screen, Visual.BLACK, [x, y, w, h], 2)
-                if id != 0:
-                    self.screen.blit(self.pieceIms[id], (x+4,y+4))
-                x += w
-            y += h
-
-    def drawBoard(self):
-        w,h = 40,40
-        y = 50
-        for i in range(self.length):
-            x = 50
-            for j in range(self.length): 
-                pygame.draw.rect(self.screen, self.col, [x, y, w, h], 2)
-                x += w
-            y += h
-
-    def drawPieces(self):
-        w,h = 40,40
-        y = 50
-        for i in range(self.length):
-            x = 50
-            for j in range(self.length):
-                id = self.board.matrix[i][j]
-                if id != 0:
-                    self.screen.blit(self.pieceIms[id], (x+4,y+4))
-                x += w
-            y += h
-
-    def drawState(self):
-        self.screen.fill(Visual.WHITE)
-        self.button("Solve Puzzle", 600, 100, 30, 20, pygame.Color('0x929591'), pygame.Color('0xd8dcd6'), works)
-        self.button("Get puzzle", 600, 130, 30, 20, pygame.Color('0x929591'), pygame.Color('0xd8dcd6'), works)
-        self.drawBoard()
-        self.drawPieces()
-        self.drawGoal()
-        pygame.display.flip()
-
-    def changeColor(self, color):
-        self.col = color
-
-def works():
-    print("worked")
-
-def visualize(puzzle):
-    vis = Visual(puzzle)
-    GREEN = 0, 255, 0
-    if messages:
-        print("VISUAL")
-        print("-----------------")
-
-    start = pygame.time.get_ticks()
-    i=0
-    j=0
-    done = False
-    while not done:
-        if i % 500000 == 0 and j<=puzzle.sol.solpos:
-            move, vis.board, empty = SBP.domove(puzzle.sol.seq[j], vis.board)
-            if messages:
-                print(puzzle.sol.seq[j].describe)
-            j+=1
-            vis.drawState()
-        elif j == puzzle.sol.solpos+1:
-            vis.changeColor(GREEN)
-            vis.drawState()
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                done = True
-        i+=1
-    pygame.quit()
-
-def basicVisualise(puzzle):
-    vis = Visual(puzzle)
-    stop = False
-    while not stop:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                stop = True
-        vis.drawState()
-    pygame.quit()
     
     
 if __name__ == "__main__":
-    #test()
-    #tilelevelstuff()
-    """
-    pygame.init()
-    with open("mutatedistcomp2.csv", 'a+') as f:
-        f.write("dist, moves, time\n")
-        for i in range(10, 100, 10):
-            for j in range(3):
-                compareDifficulty(i, f)
-            print("\n")
-"""
+    # readin board and then print out solution
+    pass
