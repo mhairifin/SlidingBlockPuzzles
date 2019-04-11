@@ -1,5 +1,5 @@
 data = []
-with open("originalBoards_justscores") as read:
+with open("originalBoards_limited_scores") as read:
     for line in read:
         els = line.split(", ")
         data.append((int(els[0]), float(els[1]), float(els[2]), int(els[3].strip())))
