@@ -3,7 +3,11 @@ import heapq
 import copy
 import statistics as stats
 from enum import Enum
-import sys, pygame
+import sys
+import contextlib
+with contextlib.redirect_stdout(None):
+    import pygame
+    
 from pygame import time
 import numpy as np
 import math

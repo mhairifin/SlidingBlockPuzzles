@@ -2,7 +2,9 @@ import genetic as gen
 
 import random
 
-import pygame
+import contextlib
+with contextlib.redirect_stdout(None):
+    import pygame
 from pygame import time
 
 import sys

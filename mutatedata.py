@@ -1,5 +1,7 @@
 from pygame import time
-import pygame
+import contextlib
+with contextlib.redirect_stdout(None):
+    import pygame
 import genetic as gen
 
 if __name__ == "__main__":
