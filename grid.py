@@ -18,7 +18,6 @@ final = [[0,0,0,0,0,0],
          [0,0,0,0,0,0],
          [0,0,0,0,0,0]]
 
-
 boards = readin(sys.argv[1])
 num = int(sys.argv[2])
 

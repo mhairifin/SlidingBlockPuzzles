@@ -75,7 +75,6 @@ class Random():
 
     def constructBoard(self, shuffle=1000):
         self.start = startRandom(self.available, self.twoslots, self.threeslots)
-        gen.printboard(self.start)
         return Random.shuffleBoard(self.start)
         
     def shuffleBoard(matrix, shuffle = 100):

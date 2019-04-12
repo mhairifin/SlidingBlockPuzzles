@@ -246,7 +246,7 @@ def longestLength(filename):
             length = int(els[3])
             if length>highest:
                 highest = length
-                hold = (i, length, int(els[1]), int(els[2]))
+                hold = (i, length, float(els[1]), float(els[2]))
             i+=1
     return hold
 
