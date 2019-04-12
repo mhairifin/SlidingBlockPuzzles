@@ -83,7 +83,7 @@ if __name__ == "__main__":
             puzzle.solve(mutate=True)
             print("Solved")
             deps, var, length = evaluate(puzzle.sol, board)
-            score = 0*deps+9*var+1*length
+            score = 1*deps+1*var+0.3*length
             if score > max:
                 max = score
                 top = board
