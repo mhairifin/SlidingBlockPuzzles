@@ -1,3 +1,7 @@
+"""
+Script for plotting mutation percentages, solution lengths, and time to solve
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 

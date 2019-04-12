@@ -1,3 +1,9 @@
+"""
+Scrapes original rush hour starting positions from 
+http://www.puzzles.com/products/rushhour/rhfrommarkriedel/jam.html
+for calibration
+"""
+
 from requests import get
 from contextlib import closing
 

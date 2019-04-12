@@ -1,3 +1,7 @@
+"""
+Various functions for plotting different types of data
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 

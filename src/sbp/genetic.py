@@ -1,3 +1,8 @@
+"""
+Contains a genetic algorithm for solving sliding block puzzles
+"""
+
+
 import random
 import heapq
 import copy
@@ -90,6 +95,10 @@ def getavg(select):
     for i in select:
         tot+=i.score
     return tot/len(select)
+
+"""
+Directions for pieces
+"""
     
 class Compass():
     LEFT = (0,-1)
@@ -118,6 +127,10 @@ class Compass():
             return "DOWN"
 
 
+"""
+Representation of a board
+Contains both a grid representation, and a dictionary of pieces mapped to positions
+"""
 class Board():
     def __init__(self, problem, pieces=None):
         self.matrix = problem
@@ -134,7 +147,10 @@ class Board():
             r,c = loc
             id = self.matrix[r][c]
         return self.pieces[id]
-        
+
+"""
+Representation of a sliding block puzzle to be solved
+"""
 class SBP():
 
     EMPTY = 0
@@ -151,6 +167,9 @@ class SBP():
         self.gb = SBP.getgoal(goal)
         self.max = False
 
+    """
+    Function for use by genetic generator
+    """
     def generate(self, mutate=True, chance = 0.07):
         self.max = True
         self.solve(mutate=mutate, chance=chance, maximize = True)
@@ -170,7 +189,7 @@ class SBP():
         self.inc = 0
 
         self.gen = 0
-        while self.keepgoing() and self.gen<200:
+        while self.keepgoing() and self.gen<100:
             self.pop = self.crossover(self.sel)
             self.lastsel = self.sel
             self.sel = self.select(max=maximize)
@@ -218,6 +237,11 @@ class SBP():
     def getgoal(goal):
         return SBP.piecesFromMatrix(goal)
 
+    """
+    Decides whether the alogirthm should continue based on 
+    whether the average is staying consistent
+    Also extends the sequence when necessary
+    """
     def keepgoing(self):
         if not self.found:
             if self.lastavg != None and self.curravg != None and self.favours(self.lastavg,self.curravg):
@@ -272,6 +296,9 @@ class SBP():
         best = heapq.nsmallest(int(self.selectSize()), self.pop, key=SBP.getscore)
         return best
 
+    """
+    Gets the number to select from a population to keep a consistent population size
+    """
     def selectSize(self):
         return math.sqrt(self.popsize)
         
@@ -298,7 +325,10 @@ class SBP():
         if board.matrix[mr][mc] != move.piece.id:
             return False
         return True
-                        
+
+    """
+    Crosses two sequences to obtain a third, child sequence
+    """
     def getchild(self, mum, dad):
         child = []
         ibalter = self.board.copy()
@@ -425,10 +455,16 @@ class SBP():
         x,y = t1
         s,p = t2
         return (x+s, y+p)
-            
+
+    """
+    Checks that a placement is within bounds, and there is a piece there
+    """
     def check(r, c, board):
         return SBP.within(r, c, board) and board.matrix[r][c] != SBP.EMPTY
-        
+
+    """
+    Checks if a piece can move in a given direction
+    """
     def moveable(r,c,board, dir):
         d = board.getpiece(loc=(r,c)).dir
         if d == Dir.BOTH:
@@ -452,6 +488,9 @@ class SBP():
         return zeros
 
     # calculate manhattan before running get sequence
+    """
+    Gets a random sequence of moves
+    """
     def getsequence(self, length, board, ongoingscore = None, zeros = None):
         if zeros == None:
             zeros = SBP.findzeros(board.matrix) 
@@ -575,7 +614,11 @@ class Move():
     def prin(self):
         print(self.describe)
         
-        
+
+"""
+Contains a sequence of moves 
+score represents the lowest score that sequence has acheived
+"""
 class Sequence():
     def __init__(self, seq, score, ib, sol):
         self.seq = seq

@@ -1,3 +1,7 @@
+"""
+Script for calibrating factors using original Rush Hour puzzles
+"""
+
 data = []
 with open("originalBoards_limited_scores") as read:
     for line in read:

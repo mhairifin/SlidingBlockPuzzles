@@ -1,3 +1,7 @@
+"""
+Script for collecting data on mutation percentages
+"""
+
 from pygame import time
 import contextlib
 with contextlib.redirect_stdout(None):

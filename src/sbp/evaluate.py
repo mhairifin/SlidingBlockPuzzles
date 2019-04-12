@@ -1,3 +1,8 @@
+"""
+Solves puzzles collected from a file,
+and then generates scores based on their solutions
+"""
+
 import sbp.genetic as gen
 import copy
 import sys
@@ -68,6 +73,11 @@ def readin(filename):
                 board.append(row)
     return boards
 
+
+"""
+Writes scores separated, and directly, to a file
+Also writes the scores with the boards to a separate file
+"""
 if __name__ == "__main__":
     name = sys.argv[1]
     boards = readin(name)

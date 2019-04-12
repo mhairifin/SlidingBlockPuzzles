@@ -1,3 +1,8 @@
+"""
+Contains Shuffle, Incremental, and Genetic method of puzzle creation
+Also contains Improved Incremental, and a simple shuffle-like method for creating 15-puzzles
+"""
+
 import sbp.genetic as gen
 
 import random
@@ -27,6 +32,9 @@ final = [[0,0,0,0,0,0],
          [0,0,0,0,0,0],
          [0,0,0,0,0,0]]
 
+"""
+Generates the available pieces on a Rush Hour board
+"""
 def generateAvailable():
     available = []
     for i in range(2, 13):
@@ -35,6 +43,10 @@ def generateAvailable():
         available.append((j, 3))
     return available
 
+
+""" 
+Generates the open slots on a Rush Hour board
+"""
 def genSlots():
     twoslots = []
     threeslots = []
@@ -66,6 +78,9 @@ def convertSlotToPos(num):
         col1 = num%(size-1)
         return((row, col1), (row, col1+1))
 
+"""
+Creates random solveable boards
+"""
 class Random():
     EMPTY = 0
     def __init__(self):
@@ -101,6 +116,9 @@ class Random():
             board.append(row)
         return Board(board, SBP.piecesFromMatrix(board))
 
+"""
+Creates a random board in a solved position
+"""
 def startRandom(available, twoslots, threeslots):
     board = []
     for i in range(size):
@@ -148,7 +166,10 @@ def startRandom(available, twoslots, threeslots):
             return board
     return board
     
-
+"""
+Utilises the genetic algorithm for maximising the manhattan distance
+to create a puzzle
+"""
 class Maximize():
     def __init__(self):
         self.available = generateAvailable()
@@ -212,6 +233,10 @@ class Maximize():
             final = b.matrix
         return final
 
+
+"""
+Improved version of incremental generator that prioritises more difficult positions
+"""
 class ImprovedIncremental():
     def __init__(self):
         self.available = generateAvailable()
@@ -390,6 +415,9 @@ class ImprovedIncremental():
     def inbounds(self, x, y, size):
         return x>= 0 and x<size and y>=0 and y<size
 
+    """
+    Checks if the piece would be in the way of the escape of the red car
+    """
     def inway(self, positions, r1, r2):
         for pos in positions:
             r,c = pos
@@ -548,40 +576,6 @@ if __name__ == "__main__":
             print(timetaken)
             f.write(str(timetaken) + "\n")
             f.write(gen.writeboard(level.end))
-    """
-    with open("100boardsGenetic", "w+") as f:
-        for i in range(100):
-            generateAvailable()
-            genSlots()
-            level = Maximize(available)
-            gen.printboard(level.end)
-            puzzle = gen.SBP(level.end, final)
-            puzzle.solve(mutate=True)
-            f.write(str(puzzle.solved) + "\n" + str(puzzle.sol.solpos+1) + "\n")
-            f.write(gen.writeboard(level.end))
-    """
-    """
-    generateAvailable()
-    genSlots()
-    level=Maximize(available)
-    puzzle = gen.SBP(level.end, final)
-    gen.basicVisualise(puzzle)
-    """
-    """
-    pygame.init()
-    
-    with open("40ImprovedIncremental", "w+") as f:
-        for i in range(40):
-            print(i)
-            start = time.get_ticks()
-            level = globals()[generator]()
-            end = time.get_ticks()
-            puzzle = gen.SBP(level.end, final)
-            timetaken = end-start
-            print(timetaken)
-            f.write(str(timetaken) + "\n")
-            f.write(gen.writeboard(level.end))        
-      """
 
         
         
